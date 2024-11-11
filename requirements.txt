@@ -1,1 +1,10 @@
 dvc==3.53.2
+torch
+torchvision
+transformers
+Pillow
+tqdm
+scikit-learn
+numpy
+matplotlib
+seaborn

@@ -22,3 +22,10 @@ This project aims to deploy and continuously improve a sports image recognition 
 - **GitHub**: [Sportify Classifier Repo](https://github.com/TWAAXOne/Sportify-Classifier)
 - **Dataset**: [Sports Classification on Kaggle](https://www.kaggle.com/datasets/gpiosenka/sports-classification)
 - **Model**: [EfficientNet-B0 on Hugging Face](https://huggingface.co/google/efficientnet-b0)
+
+# Instructions for testing the model
+
+1. Create and activate a virtual environment
+2. Install the dependencies with requirements.txt
+3. Upload the data to kaggle and put the data folder in the current repository
+4. Run the main.py file and you can modify the hyperparameters in config.py
