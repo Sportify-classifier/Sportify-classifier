@@ -1,0 +1,105 @@
+
+Catégorie avec le minimum d'images (69 images) : sky surfing
+Catégorie avec le maximum d'images (201 images) : football
+
+Nombre d'images par catégorie (ordre croissant) :
+- sky surfing : 69 images
+- ultimate : 107 images
+- wingsuit flying : 108 images
+- arm wrestling : 109 images
+- horseshoe pitching : 112 images
+- water cycling : 113 images
+- wheelchair basketball : 116 images
+- baton twirling : 118 images
+- hydroplane racing : 118 images
+- bike polo : 120 images
+- mushing : 121 images
+- air hockey : 122 images
+- ampute football : 122 images
+- ice yachting : 122 images
+- pole dancing : 122 images
+- axe throwing : 123 images
+- boxing : 126 images
+- snow boarding : 127 images
+- gaga : 128 images
+- jousting : 128 images
+- pole climbing : 128 images
+- wheelchair racing : 129 images
+- bowling : 130 images
+- chuckwagon racing : 130 images
+- pommel horse : 130 images
+- hang gliding : 131 images
+- hammer throw : 132 images
+- steer wrestling : 132 images
+- barell racing : 133 images
+- disc golf : 133 images
+- bungee jumping : 135 images
+- trapeze : 135 images
+- luge : 137 images
+- figure skating men : 138 images
+- log rolling : 138 images
+- tug of war : 138 images
+- cricket : 139 images
+- ice climbing : 140 images
+- shuffleboard : 140 images
+- ski jumping : 140 images
+- water polo : 140 images
+- cheerleading : 141 images
+- frisbee : 141 images
+- parallel bar : 141 images
+- tennis : 141 images
+- archery : 142 images
+- jai alai : 142 images
+- motorcycle racing : 142 images
+- sidecar racing : 143 images
+- sumo wrestling : 143 images
+- croquet : 144 images
+- fly fishing : 144 images
+- horse jumping : 144 images
+- weightlifting : 144 images
+- fencing : 145 images
+- track bicycle : 145 images
+- hurdles : 146 images
+- javelin : 146 images
+- speed skating : 146 images
+- bobsled : 148 images
+- pole vault : 148 images
+- horse racing : 149 images
+- bmx : 150 images
+- curling : 151 images
+- rock climbing : 151 images
+- table tennis : 151 images
+- surfing : 152 images
+- volleyball : 152 images
+- rowing : 153 images
+- sailboat racing : 154 images
+- billiards : 155 images
+- balance beam : 157 images
+- harness racing : 157 images
+- snowmobile racing : 157 images
+- skydiving : 158 images
+- bull riding : 159 images
+- shot put : 159 images
+- giant slalom : 160 images
+- judo : 160 images
+- figure skating pairs : 161 images
+- lacrosse : 161 images
+- uneven bars : 166 images
+- field hockey : 167 images
+- figure skating women : 167 images
+- golf : 167 images
+- polo : 167 images
+- rings : 167 images
+- swimming : 167 images
+- high jump : 169 images
+- rollerblade racing : 169 images
+- roller derby : 173 images
+- canoe slamon : 174 images
+- rugby : 176 images
+- olympic wrestling : 177 images
+- basketball : 179 images
+- hockey : 182 images
+- baseball : 184 images
+- nascar racing : 199 images
+- formula 1 racing : 200 images
+- football : 201 images

@@ -1,4 +1,3 @@
-
 from train import train_model
 from evaluate import evaluate_model
 from config import config
@@ -6,6 +5,7 @@ import os
 import random
 import torch
 import numpy as np
+from transformers import logging
 
 # Définir la graine aléatoire pour les modules random, numpy et torch
 random_seed = config['random_seed']
@@ -18,20 +18,27 @@ torch.cuda.manual_seed_all(random_seed)
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
-# Spécifier les chemins des données
+# Spécifier le chemin des données
 data_dir = config['data_dir']
-test_dir = config['test_dir']
 
-# Sélectionner les classes
+# Sélectionner les classes à inclure
 all_classes = sorted(os.listdir(data_dir))
+excluded_classes = config.get("excluded_classes", [])
+included_classes = [cls for cls in all_classes if cls not in excluded_classes]
+
 num_classes = config['num_classes']
-if num_classes and num_classes < len(all_classes):
-    selected_classes = random.sample(all_classes, num_classes)
+if num_classes and num_classes < len(included_classes):
+    selected_classes = random.sample(included_classes, num_classes)
 else:
-    selected_classes = all_classes
+    selected_classes = included_classes
+
+# Désactiver temporairement les logs de Hugging Face
+logging.set_verbosity_error()
 
 # Entraînement
+print("Entraînement en cours...")
 model = train_model(data_dir=data_dir, selected_classes=selected_classes)
 
 # Évaluation
-evaluate_model(model, data_dir=test_dir, selected_classes=selected_classes)
+print("Évaluation en cours...")
+evaluate_model(model, data_dir=data_dir, selected_classes=selected_classes)
