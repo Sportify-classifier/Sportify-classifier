@@ -27,7 +27,9 @@ This project aims to deploy and continuously improve a sports image recognition 
 
 1. Create and activate a virtual environment
 2. Install the dependencies with requirements.txt
-3. Upload the data to kaggle and put the data folder in the current repository
-4. Run the data_merging.py file to create a all_data folder with data from train, validation and test kaggle folders
-5. Adjust the hyperparameters in the config.py file
+3. Upload the data with this command:
+```shell
+dvc pull
+```
+5. Adjust the hyperparameters in the params.yaml file
 6. Run the main.py file and close the graph window each time it appears to allow the script to continue until it is fully executed
