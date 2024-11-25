@@ -1,0 +1,98 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python data_loader.py data/all_data data/prepared
+    deps:
+    - path: data/all_data
+      hash: md5
+      md5: d9136130f3edf731ea7d5bf558c20bd7.dir
+      size: 375986530
+      nfiles: 14493
+    - path: data_loader.py
+      hash: md5
+      md5: a01f53af0353d1c3cafc0deced7f2df9
+      size: 5651
+    params:
+      params.yaml:
+        data:
+          dir: ./data/all_dataJ
+        prepare:
+          seed: 42
+          split: 0.3
+          sample_fraction: 1
+          excluded_classes:
+          - sky surfing
+          max_images_per_class: 107
+    outs:
+    - path: data/prepared
+      hash: md5
+      md5: 1c2b9b2f3fb7c773cf95d3ffc23a2ecc.dir
+      size: 18723116
+      nfiles: 749
+  train:
+    cmd: python train.py data/prepared model
+    deps:
+    - path: data/prepared
+      hash: md5
+      md5: 1c2b9b2f3fb7c773cf95d3ffc23a2ecc.dir
+      size: 18723116
+      nfiles: 749
+    - path: data_loader.py
+      hash: md5
+      md5: a01f53af0353d1c3cafc0deced7f2df9
+      size: 5651
+    - path: train.py
+      hash: md5
+      md5: 3aea3938177b0384c4476c8e25b3f8d3
+      size: 6011
+    params:
+      params.yaml:
+        model:
+          name: google/efficientnet-b0
+        train:
+          seed: 42
+          lr: 5e-05
+          epochs: 1
+          batch_size: 8
+          num_classes: 7
+          num_folds: 5
+    outs:
+    - path: model
+      hash: md5
+      md5: 57a693d8d66aeefe7874a674a97d7c77.dir
+      size: 16304100
+      nfiles: 4
+  evaluate:
+    cmd: python evaluate.py model data/prepared evaluation
+    deps:
+    - path: data/prepared
+      hash: md5
+      md5: 1c2b9b2f3fb7c773cf95d3ffc23a2ecc.dir
+      size: 18723116
+      nfiles: 749
+    - path: data_loader.py
+      hash: md5
+      md5: a01f53af0353d1c3cafc0deced7f2df9
+      size: 5651
+    - path: evaluate.py
+      hash: md5
+      md5: 1d004a2d0b821a4a5e616b47e5797a9a
+      size: 4194
+    - path: model
+      hash: md5
+      md5: 57a693d8d66aeefe7874a674a97d7c77.dir
+      size: 16304100
+      nfiles: 4
+    outs:
+    - path: evaluation/confusion_matrix.png
+      hash: md5
+      md5: a99efbfc2acd75a664d84752358238be
+      size: 41134
+    - path: evaluation/loss_curve.png
+      hash: md5
+      md5: 690f533e4a329994a317fe6a54d6c963
+      size: 21257
+    - path: evaluation/metrics.json
+      hash: md5
+      md5: dd44a4cfa9df4525f524ba33413ac1a8
+      size: 1707
