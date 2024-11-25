@@ -8,3 +8,5 @@ scikit-learn
 numpy
 matplotlib
 seaborn
+pyyaml==6.0.2
+

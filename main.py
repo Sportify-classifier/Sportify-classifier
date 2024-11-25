@@ -1,14 +1,17 @@
 from train import train_model
 from evaluate import evaluate_model
-from config import config
 import os
 import random
+import yaml
 import torch
 import numpy as np
 from transformers import logging
 
+with open("params.yaml", "r") as f:
+    params = yaml.safe_load(f)
+
 # Définir la graine aléatoire pour les modules random, numpy et torch
-random_seed = config['random_seed']
+random_seed = params['train'].get("seed")
 random.seed(random_seed)
 np.random.seed(random_seed)
 torch.manual_seed(random_seed)
@@ -19,14 +22,14 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 # Spécifier le chemin des données
-data_dir = config['data_dir']
+data_dir = params['data'].get("dir")
 
 # Sélectionner les classes à inclure
 all_classes = sorted(os.listdir(data_dir))
-excluded_classes = config.get("excluded_classes", [])
+excluded_classes = params['prepare'].get("excluded_classes")
 included_classes = [cls for cls in all_classes if cls not in excluded_classes]
 
-num_classes = config['num_classes']
+num_classes = params['train'].get("num_classes")
 if num_classes and num_classes < len(included_classes):
     selected_classes = random.sample(included_classes, num_classes)
 else:

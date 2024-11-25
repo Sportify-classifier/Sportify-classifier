@@ -3,14 +3,18 @@ from torch.optim import Adam
 from tqdm import tqdm
 from transformers import EfficientNetImageProcessor, EfficientNetForImageClassification
 from data_loader import SportsDatasetSubset
-from config import config
+import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Charger les paramètres depuis params.yaml
+with open("params.yaml", "r") as f:
+    params = yaml.safe_load(f)
+
 def train_model(data_dir, selected_classes):
-    model_name = config['model_name']
+    model_name = params['model']['name']
     num_classes = len(selected_classes)
-    num_folds = config['num_folds']
+    num_folds = params['train']['num_folds']
     all_losses_train = []
     all_losses_val = []
 
@@ -38,20 +42,20 @@ def train_model(data_dir, selected_classes):
         train_subset = torch.utils.data.Subset(dataset, train_indices)
         val_subset = torch.utils.data.Subset(dataset, val_indices)
 
-        train_dataloader = torch.utils.data.DataLoader(train_subset, batch_size=config['batch_size'], shuffle=True)
+        train_dataloader = torch.utils.data.DataLoader(train_subset, batch_size=params['train']['batch_size'], shuffle=True)
         if len(val_indices) > 0:
-            val_dataloader = torch.utils.data.DataLoader(val_subset, batch_size=config['batch_size'], shuffle=False)
+            val_dataloader = torch.utils.data.DataLoader(val_subset, batch_size=params['train']['batch_size'], shuffle=False)
         else:
             val_dataloader = None
 
         model = EfficientNetForImageClassification.from_pretrained(model_name, num_labels=num_classes, ignore_mismatched_sizes=True)
-        optimizer = Adam(model.parameters(), lr=config['learning_rate'])
+        optimizer = Adam(model.parameters(), lr=params['train']['lr'])
         model.train()
 
         losses_train = []
         losses_val = []
 
-        for epoch in range(config['num_epochs']):
+        for epoch in range(params['train']['epochs']):
             # Entraînement
             model.train()
             epoch_loss_train = 0
@@ -97,16 +101,15 @@ def train_model(data_dir, selected_classes):
     mean_losses_val = np.mean(all_losses_val, axis=0) if all_losses_val else np.array([])
 
     # Graphique des pertes
-    epochs = range(1, config['num_epochs'] + 1)
+    epochs = range(1, params['train']['epochs'] + 1)
     plt.plot(epochs, mean_losses_train, label="Perte entraînement")
     if mean_losses_val.size > 0:
         plt.plot(epochs, mean_losses_val, label="Perte validation")
     plt.xlabel("Époques")
     plt.ylabel("Perte")
-    plt.title("Perte moyenne par époque (avec validation)" if mean_losses_val.size > 0 else "Perte moyenne par époque (sans validation)")
+    plt.title(
+        "Perte moyenne par époque (avec validation)" if mean_losses_val.size > 0 else "Perte moyenne par époque (sans validation)")
     plt.legend()
     plt.show()
 
     return model
-
-

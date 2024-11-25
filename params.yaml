@@ -1,0 +1,21 @@
+prepare:
+  seed: 42
+  split: 0.3  # 1 - train_split
+  sample_fraction: 0.4
+  excluded_classes:
+    - sky surfing
+  max_images_per_class: 107
+
+train:
+  seed: 42
+  lr: 0.00005
+  epochs: 1
+  batch_size: 8
+  num_classes: 5
+  num_folds: 2
+
+model:
+  name: google/efficientnet-b0
+
+data:
+  dir: ./data/all_data

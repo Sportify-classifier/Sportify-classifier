@@ -1,18 +1,34 @@
 import torch
 from transformers import EfficientNetImageProcessor
 from data_loader import SportsDatasetSubset
-from config import config
 from sklearn.metrics import classification_report, confusion_matrix
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import yaml
+
+# Charger les paramètres depuis params.yaml
+with open("params.yaml", "r") as f:
+    params = yaml.safe_load(f)
+
+
+# TODO: Modifier ce code pour créer un rapport comparant le modèle précédent avec le modèle fine-tuné (nouveau)
 
 def evaluate_model(model, data_dir, selected_classes):
-    feature_extractor = EfficientNetImageProcessor.from_pretrained(config['model_name'])
+    feature_extractor = EfficientNetImageProcessor.from_pretrained(params['model']['name'])
     model.eval()
 
-    test_dataset = SportsDatasetSubset(data_dir=data_dir, feature_extractor=feature_extractor, split="test", selected_classes=selected_classes)
-    test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=config['batch_size'], shuffle=False)
+    test_dataset = SportsDatasetSubset(
+        data_dir=data_dir,
+        feature_extractor=feature_extractor,
+        split="test",
+        selected_classes=selected_classes
+    )
+    test_dataloader = torch.utils.data.DataLoader(
+        test_dataset,
+        batch_size=params['train']['batch_size'],
+        shuffle=False
+    )
 
     all_labels = []
     all_predictions = []
@@ -40,4 +56,3 @@ def evaluate_model(model, data_dir, selected_classes):
     plt.ylabel('Vérités terrain')
     plt.title('Matrice de confusion')
     plt.show()
-
