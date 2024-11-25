@@ -3,7 +3,7 @@ import shutil
 
 # Chemins des dossiers
 base_dir = "./data"
-folders = ["train", "test", "validation"]
+folders = ["train", "test", "valid"]
 temp_dir = os.path.join(base_dir, "all_data")
 
 # Étape 1 : Fusionner les données dans un seul dossier temporaire
@@ -29,7 +29,7 @@ for folder in folders:
             elif folder == "test":
                 # Format : inchangé (1.jpg, 2.jpg, etc.).
                 new_file_name = file
-            elif folder == "validation":
+            elif folder == "valid":
                 # Format : 01.jpg, 02.jpg, etc.
                 base_name, ext = os.path.splitext(file)
                 new_file_name = base_name.zfill(2) + ext  # Préfixe avec un zéro pour 1 -> 01.jpg
