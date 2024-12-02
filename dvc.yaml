@@ -2,34 +2,35 @@ stages:
   prepare:
     cmd: python data_loader.py data/all_data data/prepared
     deps:
-    - data/all_data
-    - data_loader.py
+      - data/all_data
+      - data_loader.py
     params:
-    - data
-    - prepare
+      - prepare
+      - data
     outs:
-    - data/prepared
+      - data/prepared
+
   train:
-    cmd: python train.py data/prepared model
+    cmd: python train.py data/prepared model_versions
     deps:
-    - data/prepared
-    - data_loader.py
-    - train.py
+      - data/prepared
+      - train.py
     params:
-    - model
-    - train
+      - train
+      - model
     outs:
-    - model
+      - model_versions
+
   evaluate:
-    cmd: python evaluate.py model data/prepared evaluation
+    cmd: python evaluate.py model_versions data/prepared evaluation_outputs
     deps:
-    - data/prepared
-    - data_loader.py
-    - evaluate.py
-    - model
+      - data/prepared
+      - evaluate.py
+      - model_versions
     metrics:
-    - evaluation/metrics.json:
-        cache: false
+      - evaluation_outputs/metrics.json
     plots:
-    - evaluation/confusion_matrix.png
-    - evaluation/loss_curve.png
+      - evaluation_outputs/loss_curve.png
+      - evaluation_outputs/confusion_matrix.png
+      - evaluation_outputs/normalized_confusion_matrix.png
+      - evaluation_outputs/precision_recall_curves.png

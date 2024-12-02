@@ -1,40 +1,129 @@
+import os
+import sys
 import torch
-from transformers import EfficientNetImageProcessor, EfficientNetForImageClassification
-from data_loader import SportsDatasetSubset
-from sklearn.metrics import classification_report, confusion_matrix, f1_score, accuracy_score
+import yaml
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import yaml
-import os
-import sys
 import json
-import shutil
+from datetime import datetime
+from sklearn.metrics import (
+    classification_report,
+    confusion_matrix,
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    cohen_kappa_score,
+    matthews_corrcoef,
+    precision_recall_curve,
+    average_precision_score
+)
+from sklearn.preprocessing import label_binarize
+from transformers import EfficientNetImageProcessor, EfficientNetForImageClassification
+from torch.utils.data import DataLoader
+from utils import SportsDataset
 
 # Charger les paramètres depuis params.yaml
 with open("params.yaml", "r") as f:
     params = yaml.safe_load(f)
 
-def evaluate_model(model_dir, data_dir, output_dir, selected_classes):
+def get_latest_model_dir(model_versions_dir):
+    subdirs = [
+        os.path.join(model_versions_dir, d) for d in os.listdir(model_versions_dir)
+        if os.path.isdir(os.path.join(model_versions_dir, d))
+    ]
+    if not subdirs:
+        raise Exception(f"Aucun dossier de modèle trouvé dans {model_versions_dir}")
+    latest_subdir = max(subdirs, key=os.path.getmtime)
+    return latest_subdir
+
+def create_versioned_dir(base_dir, prefix):
+    # Créer un dossier avec un horodatage
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    versioned_dir = os.path.join(base_dir, f"{prefix}_{timestamp}")
+    os.makedirs(versioned_dir, exist_ok=True)
+    return versioned_dir
+
+def plot_precision_recall_curves(all_labels, all_predictions, classes, output_dir):
+    # Binariser les labels et les prédictions
+    y_test = label_binarize(all_labels, classes=range(len(classes)))
+    y_score = label_binarize(all_predictions, classes=range(len(classes)))
+
+    plt.figure(figsize=(10, 8))
+    for i in range(len(classes)):
+        precision, recall, _ = precision_recall_curve(y_test[:, i], y_score[:, i])
+        average_precision = average_precision_score(y_test[:, i], y_score[:, i])
+        plt.step(recall, precision, where='post', label=f'{classes[i]} (AP={average_precision:.2f})')
+
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.title('Courbe Precision-Recall')
+    plt.legend()
+    plt.savefig(os.path.join(output_dir, 'precision_recall_curves.png'))
+    plt.close()
+    print(f"Courbes Precision-Recall sauvegardées dans {os.path.join(output_dir, 'precision_recall_curves.png')}")
+
+def generate_html_report(metrics, output_dir):
+    # Préparer les métriques au format HTML
+    metrics_html = '''
+    <h2>Métriques</h2>
+    <pre>{}</pre>
+    '''.format(json.dumps(metrics, indent=4))
+
+    # Liste des graphiques à inclure
+    plots = [
+        'loss_curve.png',
+        'confusion_matrix.png',
+        'normalized_confusion_matrix.png',
+        'precision_recall_curves.png'
+    ]
+
+    # Construire le contenu HTML
+    html_content = f"""
+    <html>
+    <head>
+        <title>Rapport d'Évaluation du Modèle</title>
+    </head>
+    <body>
+        <h1>Rapport d'Évaluation du Modèle</h1>
+        {metrics_html}
+    """
+
+    for plot in plots:
+        if os.path.exists(os.path.join(output_dir, plot)):
+            html_content += f"""
+            <h2>{plot.replace('_', ' ').title()}</h2>
+            <img src="{plot}" alt="{plot}" style="max-width:100%; height:auto;">
+            """
+
+    html_content += """
+    </body>
+    </html>
+    """
+
+    # Sauvegarder le rapport HTML
+    with open(os.path.join(output_dir, 'report.html'), 'w') as f:
+        f.write(html_content)
+    print(f"Rapport HTML sauvegardé dans {os.path.join(output_dir, 'report.html')}")
+
+def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
+    # Créer un dossier versionné pour les évaluations
+    output_dir = create_versioned_dir(evaluation_versions_dir, 'model')
+
+    # Initialiser le feature extractor et le modèle
     feature_extractor = EfficientNetImageProcessor.from_pretrained(model_dir)
     model = EfficientNetForImageClassification.from_pretrained(model_dir)
     model.eval()
 
-    test_dataset = SportsDatasetSubset(
-        data_dir=data_dir,
-        feature_extractor=feature_extractor,
-        split="test",
-        selected_classes=selected_classes
-    )
-    test_dataloader = torch.utils.data.DataLoader(
-        test_dataset,
-        batch_size=params['train']['batch_size'],
-        shuffle=False
-    )
+    # Charger le dataset de test
+    test_dataset = SportsDataset(data_dir=data_dir, feature_extractor=feature_extractor)
+    test_dataloader = DataLoader(test_dataset, batch_size=params['train']['batch_size'], shuffle=False)
 
     all_labels = []
     all_predictions = []
 
+    # Boucle d'évaluation
     with torch.no_grad():
         for batch in test_dataloader:
             inputs = batch['pixel_values'].squeeze(1)
@@ -47,60 +136,109 @@ def evaluate_model(model_dir, data_dir, output_dir, selected_classes):
 
     # Calcul des métriques
     accuracy = accuracy_score(all_labels, all_predictions)
-    f1 = f1_score(all_labels, all_predictions, average='weighted')  # F1-score pondéré
-    classif_report = classification_report(all_labels, all_predictions, target_names=selected_classes, output_dict=True)
+    f1 = f1_score(all_labels, all_predictions, average='weighted')
+    precision = precision_score(all_labels, all_predictions, average='weighted', zero_division=0)
+    recall = recall_score(all_labels, all_predictions, average='weighted', zero_division=0)
+    cohen_kappa = cohen_kappa_score(all_labels, all_predictions)
+    mcc = matthews_corrcoef(all_labels, all_predictions)
 
-    # Sauvegarder les métriques dans un fichier JSON
+    # Rapport de classification
+    classif_report = classification_report(
+        all_labels,
+        all_predictions,
+        target_names=test_dataset.classes,
+        output_dict=True,
+        zero_division=0
+    )
+
+    # Sauvegarder les métriques
+    os.makedirs(output_dir, exist_ok=True)
     metrics = {
         'accuracy': accuracy,
-        'f1_score': f1,
+        'precision_weighted': precision,
+        'recall_weighted': recall,
+        'f1_score_weighted': f1,
+        'cohen_kappa': cohen_kappa,
+        'mcc': mcc,
         'classification_report': classif_report
     }
-    os.makedirs(output_dir, exist_ok=True)  # Création du dossier de sortie si nécessaire
     with open(os.path.join(output_dir, 'metrics.json'), 'w') as f:
         json.dump(metrics, f, indent=4)
     print(f"Métriques sauvegardées dans {os.path.join(output_dir, 'metrics.json')}")
 
-    # Afficher les métriques
-    print(f'Précision globale : {accuracy * 100:.2f}%')
-    print(f'F1-score (pondéré) : {f1 * 100:.2f}%')
-
     # Matrice de confusion
     cm = confusion_matrix(all_labels, all_predictions)
     plt.figure(figsize=(10, 8))
-    sns.heatmap(cm, annot=True, fmt='d', xticklabels=selected_classes, yticklabels=selected_classes, cmap='Blues')
+    sns.heatmap(cm, annot=True, fmt='d', xticklabels=test_dataset.classes, yticklabels=test_dataset.classes, cmap='Blues')
     plt.xlabel('Prédictions')
     plt.ylabel('Vérités terrain')
     plt.title('Matrice de confusion')
-    plt.savefig(os.path.join(output_dir, 'confusion_matrix.png'))  # Enregistrer la matrice de confusion
+    plt.savefig(os.path.join(output_dir, 'confusion_matrix.png'))
     plt.close()
     print(f"Matrice de confusion sauvegardée dans {os.path.join(output_dir, 'confusion_matrix.png')}")
 
-    # Copier la courbe de perte depuis le dossier du modèle vers le dossier d'évaluation
+    # Matrice de confusion normalisée
+    cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(cm_normalized, annot=True, fmt='.2f', xticklabels=test_dataset.classes, yticklabels=test_dataset.classes, cmap='Blues')
+    plt.xlabel('Prédictions')
+    plt.ylabel('Vérités terrain')
+    plt.title('Matrice de confusion normalisée')
+    plt.savefig(os.path.join(output_dir, 'normalized_confusion_matrix.png'))
+    plt.close()
+    print(f"Matrice de confusion normalisée sauvegardée dans {os.path.join(output_dir, 'normalized_confusion_matrix.png')}")
+
+    # Courbes Precision-Recall
+    plot_precision_recall_curves(all_labels, all_predictions, test_dataset.classes, output_dir)
+
+    # Copier la courbe de perte depuis le dossier du modèle
     loss_curve_src = os.path.join(model_dir, 'loss_curve.png')
     loss_curve_dst = os.path.join(output_dir, 'loss_curve.png')
     if os.path.exists(loss_curve_src):
-        shutil.copyfile(loss_curve_src, loss_curve_dst)
+        from shutil import copyfile
+        copyfile(loss_curve_src, loss_curve_dst)
         print(f"Courbe de perte copiée dans {loss_curve_dst}")
     else:
         print("Courbe de perte non trouvée dans le dossier du modèle.")
 
-# Ajout d'une fonction principale pour exécuter l'évaluation
+    # Générer le rapport HTML
+    generate_html_report(metrics, output_dir)
+
+    # Copier les outputs dans un répertoire fixe pour DVC
+    fixed_output_dir = 'evaluation_outputs'
+    os.makedirs(fixed_output_dir, exist_ok=True)
+    # Liste des fichiers à copier
+    output_files = [
+        'metrics.json',
+        'loss_curve.png',
+        'confusion_matrix.png',
+        'normalized_confusion_matrix.png',
+        'precision_recall_curves.png',
+        'report.html'
+    ]
+    from shutil import copyfile
+    for file_name in output_files:
+        src_file = os.path.join(output_dir, file_name)
+        dst_file = os.path.join(fixed_output_dir, file_name)
+        if os.path.exists(src_file):
+            if os.path.abspath(src_file) != os.path.abspath(dst_file):
+                copyfile(src_file, dst_file)
+                print(f"Fichier {file_name} copié dans {fixed_output_dir}")
+            else:
+                print(f"Le fichier source et destination sont identiques pour {file_name}, pas de copie effectuée.")
+
 if __name__ == "__main__":
-    # Vérifier les arguments de ligne de commande
     if len(sys.argv) != 4:
-        print("Usage: python evaluate.py <model_dir> <data_prepared_dir> <evaluation_output_dir>")
+        print("Usage: python evaluate.py <model_versions_dir> <data_prepared_dir> <evaluation_versions_dir>")
         sys.exit(1)
 
-    model_dir = sys.argv[1]
+    model_versions_dir = sys.argv[1]
     data_prepared_dir = sys.argv[2]
-    output_dir = sys.argv[3]
+    evaluation_versions_dir = sys.argv[3]
 
-    # Spécifier le chemin des données
-    data_dir = os.path.join(data_prepared_dir, 'test')  # Chemin des données de test
-
-    # Sélectionner les classes à inclure
-    selected_classes = sorted(os.listdir(data_dir))
+    # Obtenir le dernier dossier de modèle
+    model_dir = get_latest_model_dir(model_versions_dir)
+    data_dir = os.path.join(data_prepared_dir, 'test')
 
     # Appeler la fonction d'évaluation
-    evaluate_model(model_dir=model_dir, data_dir=data_dir, output_dir=output_dir, selected_classes=selected_classes)
+    evaluate_model(model_dir=model_dir, data_dir=data_dir, evaluation_versions_dir=evaluation_versions_dir)
