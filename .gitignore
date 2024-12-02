@@ -171,7 +171,7 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 /model
-/model_versions
+model_versions/*
 /evaluation_versions
 evaluation_outputs/*
 
