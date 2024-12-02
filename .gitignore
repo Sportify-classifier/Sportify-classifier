@@ -173,3 +173,5 @@ cython_debug/
 /model
 /model_versions
 /evaluation_versions
+evaluation_outputs/*
+
