@@ -4,7 +4,7 @@ on:
   # Runs on pushes targeting my  branch for the moment
   push:
     branches:
-      - dvc_stage_pierre
+      - main
 
 
   pull_request:
