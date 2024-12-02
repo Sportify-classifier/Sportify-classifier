@@ -28,7 +28,7 @@ This project aims to deploy and continuously improve a sports image recognition 
 ---
 
 ## **Resources**
-- **GitHub**: [Sportify Classifier Repository](https://github.com/TWAAXOne/Sportify-Classifier)  
+- **GitHub**: [Sportify Classifier Repository](https://github.com/Sportify-classifier/Sportify-classifier)  
 - **Dataset**: [Sports Classification Dataset on Kaggle](https://www.kaggle.com/datasets/gpiosenka/sports-classification)  
 - **Model**: [EfficientNet-B0 on Hugging Face](https://huggingface.co/google/efficientnet-b0)
 
