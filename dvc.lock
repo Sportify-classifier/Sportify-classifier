@@ -5,9 +5,9 @@ stages:
     deps:
     - path: data/all_data
       hash: md5
-      md5: d9226517a63e3e39b505386a41f9545d.dir
-      size: 376017254
-      nfiles: 14494
+      md5: d9136130f3edf731ea7d5bf558c20bd7.dir
+      size: 375986530
+      nfiles: 14493
     - path: data_loader.py
       hash: md5
       md5: dc015fbc5195283045e6836ba03ced65
@@ -26,16 +26,16 @@ stages:
     outs:
     - path: data/prepared
       hash: md5
-      md5: 6d93a9442165fa687076136ee1227069.dir
-      size: 18047217
+      md5: 964ec324c2b9a99ba860757511325f5a.dir
+      size: 18723116
       nfiles: 749
   train:
     cmd: python train.py data/prepared model_versions
     deps:
     - path: data/prepared
       hash: md5
-      md5: 6d93a9442165fa687076136ee1227069.dir
-      size: 18047217
+      md5: 964ec324c2b9a99ba860757511325f5a.dir
+      size: 18723116
       nfiles: 749
     - path: train.py
       hash: md5
@@ -49,50 +49,50 @@ stages:
           seed: 42
           lr: 5e-05
           epochs: 2
-          batch_size: 8
+          batch_size: 10
           num_classes: 7
           num_folds: 3
     outs:
     - path: model_versions
       hash: md5
-      md5: f85df65a4a794aa4ffe4d01899786c8e.dir
-      size: 16309459
+      md5: 540a892b1b5599863cb5408683e4e557.dir
+      size: 16310894
       nfiles: 4
   evaluate:
     cmd: python evaluate.py model_versions data/prepared evaluation_outputs
     deps:
     - path: data/prepared
       hash: md5
-      md5: 6d93a9442165fa687076136ee1227069.dir
-      size: 18047217
+      md5: 964ec324c2b9a99ba860757511325f5a.dir
+      size: 18723116
       nfiles: 749
     - path: evaluate.py
       hash: md5
-      md5: 0ec0de9a2d3dad5efe0ab2948b471b8e
-      size: 9249
+      md5: a662bd75cbdd8e2d61f9dbe8e274c386
+      size: 9146
     - path: model_versions
       hash: md5
-      md5: f85df65a4a794aa4ffe4d01899786c8e.dir
-      size: 16309459
+      md5: 540a892b1b5599863cb5408683e4e557.dir
+      size: 16310894
       nfiles: 4
     outs:
     - path: evaluation_outputs/confusion_matrix.png
       hash: md5
-      md5: 68b64894dc11fc6aedae9e26f3ea062a
-      size: 42491
+      md5: 90236dc633bd7b61c634ba7975a36bd9
+      size: 42878
     - path: evaluation_outputs/loss_curve.png
       hash: md5
-      md5: 72bc87e2419b6ca9c7c7561a00c67922
-      size: 26616
+      md5: 7205364651057ed210449e4d56e1696a
+      size: 28051
     - path: evaluation_outputs/metrics.json
       hash: md5
-      md5: 51c7e753ec013039ea9fcd5e1698d094
-      size: 2040
+      md5: b3a85127ca95d514a184546e3567c1de
+      size: 2001
     - path: evaluation_outputs/normalized_confusion_matrix.png
       hash: md5
-      md5: 72a52435330ddc15e162978703c1939c
-      size: 56860
+      md5: 127847f21c1a46c6636d4d7620d2da96
+      size: 56279
     - path: evaluation_outputs/precision_recall_curves.png
       hash: md5
-      md5: 92530e4d2549c8150500be9e59febd57
-      size: 39528
+      md5: d886929734fbc3764fc3e7c9479910b0
+      size: 39931

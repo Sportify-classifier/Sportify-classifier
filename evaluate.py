@@ -49,13 +49,11 @@ def plot_precision_recall_curves(all_labels, all_predictions, classes, output_di
     # Binariser les labels et les prédictions
     y_test = label_binarize(all_labels, classes=range(len(classes)))
     y_score = label_binarize(all_predictions, classes=range(len(classes)))
-
     plt.figure(figsize=(10, 8))
     for i in range(len(classes)):
         precision, recall, _ = precision_recall_curve(y_test[:, i], y_score[:, i])
         average_precision = average_precision_score(y_test[:, i], y_score[:, i])
         plt.step(recall, precision, where='post', label=f'{classes[i]} (AP={average_precision:.2f})')
-
     plt.xlabel('Recall')
     plt.ylabel('Precision')
     plt.title('Courbe Precision-Recall')
@@ -70,7 +68,6 @@ def generate_html_report(metrics, output_dir):
     <h2>Métriques</h2>
     <pre>{}</pre>
     '''.format(json.dumps(metrics, indent=4))
-
     # Liste des graphiques à inclure
     plots = [
         'loss_curve.png',
@@ -78,7 +75,6 @@ def generate_html_report(metrics, output_dir):
         'normalized_confusion_matrix.png',
         'precision_recall_curves.png'
     ]
-
     # Construire le contenu HTML
     html_content = f"""
     <html>
@@ -89,27 +85,25 @@ def generate_html_report(metrics, output_dir):
         <h1>Rapport d'Évaluation du Modèle</h1>
         {metrics_html}
     """
-
     for plot in plots:
         if os.path.exists(os.path.join(output_dir, plot)):
             html_content += f"""
             <h2>{plot.replace('_', ' ').title()}</h2>
-            <img src="{plot}" alt="{plot}" style="max-width:100%; height:auto;">
+            <img src="{plot}" alt="{plot}" style="max-width:100%;">
             """
-
     html_content += """
     </body>
     </html>
     """
-
     # Sauvegarder le rapport HTML
     with open(os.path.join(output_dir, 'report.html'), 'w') as f:
         f.write(html_content)
     print(f"Rapport HTML sauvegardé dans {os.path.join(output_dir, 'report.html')}")
 
 def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
-    # Créer un dossier versionné pour les évaluations
-    output_dir = create_versioned_dir(evaluation_versions_dir, 'model')
+    # Définir le répertoire de sortie fixe pour DVC
+    output_dir = evaluation_versions_dir  # Ce sera 'evaluation_outputs'
+    os.makedirs(output_dir, exist_ok=True)
 
     # Initialiser le feature extractor et le modèle
     feature_extractor = EfficientNetImageProcessor.from_pretrained(model_dir)
@@ -152,7 +146,6 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
     )
 
     # Sauvegarder les métriques
-    os.makedirs(output_dir, exist_ok=True)
     metrics = {
         'accuracy': accuracy,
         'precision_weighted': precision,
@@ -204,10 +197,9 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
     # Générer le rapport HTML
     generate_html_report(metrics, output_dir)
 
-    # Copier les outputs dans un répertoire fixe pour DVC
-    fixed_output_dir = 'evaluation_outputs'
-    os.makedirs(fixed_output_dir, exist_ok=True)
-    # Liste des fichiers à copier
+    # Après avoir sauvegardé les outputs, copier vers le dossier versionné pour archivage
+    versioned_dir = create_versioned_dir(evaluation_versions_dir, 'model')
+    os.makedirs(versioned_dir, exist_ok=True)
     output_files = [
         'metrics.json',
         'loss_curve.png',
@@ -219,26 +211,22 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
     from shutil import copyfile
     for file_name in output_files:
         src_file = os.path.join(output_dir, file_name)
-        dst_file = os.path.join(fixed_output_dir, file_name)
+        dst_file = os.path.join(versioned_dir, file_name)
         if os.path.exists(src_file):
-            if os.path.abspath(src_file) != os.path.abspath(dst_file):
-                copyfile(src_file, dst_file)
-                print(f"Fichier {file_name} copié dans {fixed_output_dir}")
-            else:
-                print(f"Le fichier source et destination sont identiques pour {file_name}, pas de copie effectuée.")
+            copyfile(src_file, dst_file)
+            print(f"Fichier {file_name} copié dans le répertoire versionné {versioned_dir}")
+        else:
+            print(f"Le fichier {file_name} n'existe pas dans {output_dir}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
         print("Usage: python evaluate.py <model_versions_dir> <data_prepared_dir> <evaluation_versions_dir>")
         sys.exit(1)
-
     model_versions_dir = sys.argv[1]
     data_prepared_dir = sys.argv[2]
     evaluation_versions_dir = sys.argv[3]
-
     # Obtenir le dernier dossier de modèle
     model_dir = get_latest_model_dir(model_versions_dir)
     data_dir = os.path.join(data_prepared_dir, 'test')
-
     # Appeler la fonction d'évaluation
     evaluate_model(model_dir=model_dir, data_dir=data_dir, evaluation_versions_dir=evaluation_versions_dir)
