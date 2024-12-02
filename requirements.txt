@@ -9,4 +9,4 @@ numpy
 matplotlib
 seaborn
 pyyaml==6.0.2
-
+dvc[gs]==3.53.2
