@@ -4,11 +4,11 @@
 ---
 
 ## **Team**
-- Perrod Maxime  
-- Assiamua Komivi  
-- Berisha Veton  
-- Besson Raphaël  
-- Kouma Assagnon  
+- Komivi ASSIAMUA
+- Veton BERISHA
+- Raphaël BESSON
+- Assagnon KOUMA
+- Maxime PERROD
 
 ---
 
@@ -65,7 +65,32 @@ project-folder/
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS="service-account-key.json"
 ```
-4. Verify the connection to Google Cloud by listing the project and buckets:
+4. Verify if gcloud CLI is Installed
+
+Check if `gcloud` is installed by running:
+```bash
+gcloud --version
+```
+If `gcloud` is not installed, follow the installation instructions in this link : https://cloud.google.com/sdk/docs/install
+
+5. Authenticate the service account
+
+Activate the service account with the following command:
+```bash
+gcloud auth activate-service-account --key-file="service-account-key.json"
+```
+This step ensures the `gcloud` CLI uses the credentials in the service account key file. We can verify if the account is correctly activated with the following command:
+```bash
+gcloud auth list
+```
+Check if the service account is active. If not, explicitly set it as the active account with the following command:
+
+```bash
+gcloud config set account [service-account-email]
+```
+Replace [service-account-email] with the email address of the service account, which is typically found in the service-account-key.json file.
+
+6. Verify the connection to Google Cloud by listing the project and buckets:
 ```bash
 gcloud config set project modern-bond-303506
 gcloud storage buckets list
