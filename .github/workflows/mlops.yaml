@@ -21,7 +21,7 @@ jobs:
           python-version: '3.11'
           cache: pip
       - name: Install dependencies
-        run: pip install --requirement requirements-freeze.txt
+        run: pip install --requirement requirements.txt
       - name: Login to Google Cloud
         uses: google-github-actions/auth@v2
         with:
