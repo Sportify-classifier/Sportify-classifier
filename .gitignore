@@ -175,3 +175,4 @@ model_versions/*
 /evaluation_versions
 evaluation_outputs/*
 
+service-account-key.json

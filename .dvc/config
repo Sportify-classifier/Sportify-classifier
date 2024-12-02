@@ -1,4 +1,6 @@
 [core]
-    remote = data
+    remote = gcs_remote
 ['remote "data"']
     url = gs://sportify_image_bucket/dvcstore
+['remote "gcs_remote"']
+    url = gs://sportify_classifier
