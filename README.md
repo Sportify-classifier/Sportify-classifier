@@ -106,3 +106,15 @@ If everything is set up correctly, this will download the dataset into the appro
 ### **5. Adjust the params.yaml**
 Modify the params.yaml to adjust the training parameters. And push the changes to the repository.
 It will execute the CI/CD pipeline and train the model with the new parameters.
+
+
+
+Note perso
+On a créer un fichier dockerfile pour l'entrainement sur google vertex. On a push l'image sur google avec
+ gcloud builds submit --tag gcr.io/modern-bond-303506/train_image:latest .
+
+Puis, pour lancer l'entrainement sur gcloud: 
+gcloud ai custom-jobs create \
+  --region=us-central1 \
+  --display-name="entraînement-mlops" \
+  --worker-pool-spec=machine-type=n1-standard-4,container-image=gcr.io/<votre_projet>/train_image:latest,command=python,command=train.py,command=data/prepared,command=model_versions

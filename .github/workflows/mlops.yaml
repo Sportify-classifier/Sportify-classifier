@@ -1,30 +1,82 @@
 name: MLOps
 
 on:
-  # Runs on pushes targeting my  branch for the moment
   push:
     branches:
       - main
 
-
-  pull_request:
-  workflow_dispatch:
 jobs:
   train:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: pip
+
       - name: Install dependencies
         run: pip install --requirement requirements.txt
+
       - name: Login to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: '${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}'
-      - name: Train model
-        run: dvc repro --pull
+
+      - name: Configure gcloud
+        run: |
+          gcloud config set project modern-bond-303506
+          gcloud config set compute/region us-central1
+
+      # Construire l'image Docker et la pousser sur GCR
+      - name: Build and push Docker image
+        run: gcloud builds submit --tag gcr.io/modern-bond-303506/train_image:latest .
+
+      # Lancer le job Vertex AI
+      # (Vous pouvez utiliser une étape python qui lance la commande gcloud)
+      - name: Launch Vertex AI job
+        id: launch_job
+        run: |
+          JOB_ID=$(gcloud ai custom-jobs create \
+            --region=us-central1 \
+            --display-name="entraînement-mlops" \
+            --worker-pool-spec=machine-type=n1-standard-4,container-image=gcr.io/modern-bond-303506/train_image:latest,command=python,command=train.py,command=data/prepared,command=model_versions \
+            --format='value(name)')
+          echo "JOB_ID=$JOB_ID" >> $GITHUB_ENV
+
+      # Attendre la fin du job (vous pouvez écrire un petit script bash)
+      - name: Wait for job to finish
+        run: |
+          JOB_ID="${JOB_ID}"
+          STATUS=$(gcloud ai custom-jobs describe $JOB_ID --region=us-central1 --format='value(state)')
+          while [ "$STATUS" != "SUCCEEDED" ] && [ "$STATUS" != "FAILED" ]; do
+            echo "Job status: $STATUS"
+            sleep 30
+            STATUS=$(gcloud ai custom-jobs describe $JOB_ID --region=us-central1 --format='value(state)')
+          done
+          echo "Final job status: $STATUS"
+          if [ "$STATUS" = "FAILED" ]; then
+            exit 1
+          fi
+
+      # Une fois terminé, le job aura produit le modèle et les métriques dans un bucket GCS (si vous avez spécifié un base-output-dir dans la commande)
+      # Vous pouvez récupérer ces artefacts :
+      # gsutil cp -r gs://<votre-bucket>/training-outputs/model_versions .
+      # gsutil cp gs://<votre-bucket>/training-outputs/evaluation_outputs/metrics.json .
+      # Puis:
+      - name: Pull new model and metrics from GCS
+        run: |
+          gsutil cp -r gs://sportify_classifier/training-outputs/model_versions .
+          gsutil cp -r gs://sportify_classifier/training-outputs/evaluation_outputs .
+
+      - name: DVC add and push
+        run: |
+          dvc add model_versions
+          dvc add evaluation_outputs/metrics.json
+          git add model_versions.dvc evaluation_outputs/metrics.json.dvc
+          git commit -m "Add new model and metrics"
+          dvc push
+          git push
