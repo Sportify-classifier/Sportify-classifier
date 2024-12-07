@@ -10,10 +10,6 @@ from tqdm import tqdm
 from transformers import EfficientNetImageProcessor, EfficientNetForImageClassification
 from torch.utils.data import DataLoader, Subset
 from utils import SportsDataset, create_versioned_dir
-import subprocess
-
-# Tirer les données
-subprocess.run(["dvc", "pull", "-r", "data"], check=True)
 
 # Charger les paramètres depuis params.yaml
 with open("params.yaml", "r") as f:

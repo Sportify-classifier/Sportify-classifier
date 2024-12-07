@@ -21,9 +21,8 @@ jobs:
       - name: Configure gcloud
         run: |
           gcloud config set project modern-bond-303506
-        # gcloud config set compute/region us-central1
 
-      # Installer uniquement DVC avec support GCS pour gérer les modèles et metrics
+      # Installer uniquement DVC avec support GCS pour gérer les modèles et métriques au niveau du CI
       - name: Install DVC
         run: pip install dvc[gcs]
 
@@ -31,18 +30,18 @@ jobs:
       - name: Build and push Docker image
         run: gcloud builds submit --tag gcr.io/modern-bond-303506/train_image:latest .
 
-      # Lancer le job Vertex AI
+      # Lancer le job Vertex AI en exécutant dvc repro --pull dans le conteneur
       - name: Launch Vertex AI job
         id: launch_job
         run: |
           JOB_ID=$(gcloud ai custom-jobs create \
             --region=us-central1 \
             --display-name="entraînement-mlops" \
-            --worker-pool-spec=machine-type=n1-standard-4,container-image-uri=gcr.io/modern-bond-303506/train_image:latest,command=python,args=train.py,args=data/prepared,args=model_versions \
+            --worker-pool-spec=machine-type=n1-standard-4,container-image-uri=gcr.io/modern-bond-303506/train_image:latest,command=dvc,args=repro,args=--pull \
             --format='value(name)')
           echo "JOB_ID=$JOB_ID" >> $GITHUB_ENV
 
-      # Attendre la fin du job
+      # Attendre la fin du job Vertex AI
       - name: Wait for job to finish
         run: |
           STATUS=$(gcloud ai custom-jobs describe "${JOB_ID}" --region=us-central1 --format='value(state)')
@@ -59,7 +58,7 @@ jobs:
           JOB_ID: ${{ env.JOB_ID }}
 
       # Récupérer le modèle et les métriques depuis GCS
-      # Assurez-vous que le job Vertex AI les a bien exportés dans gs://sportify_classifier/training-outputs/
+      # Assurez-vous que dans votre pipeline DVC, l'étape 'evaluate' ou vos scripts copient les artefacts finaux dans gs://sportify_classifier/training-outputs/
       - name: Pull new model and metrics from GCS
         run: |
           gsutil cp -r gs://sportify_classifier/training-outputs/model_versions .
