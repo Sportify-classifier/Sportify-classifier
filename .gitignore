@@ -4,9 +4,14 @@ data/test/
 data/train/
 data/valid/
 
+#model wandb
+/wandb/
+
 ## Python
 .venv/
 
+#Service-key
+/service-account-key.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -171,8 +176,6 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 /model
-model_versions/*
+/model_versions
 /evaluation_versions
-evaluation_outputs/*
-
-service-account-key.json
+/wandb_run_id.txt

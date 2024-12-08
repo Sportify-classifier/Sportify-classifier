@@ -9,7 +9,8 @@ from torch.optim import Adam
 from tqdm import tqdm
 from transformers import EfficientNetImageProcessor, EfficientNetForImageClassification
 from torch.utils.data import DataLoader, Subset
-from utils import SportsDataset, create_versioned_dir
+from utils import SportsDataset, create_versioned_dir, calculate_accuracy, log_metrics_to_wandb
+import wandb
 
 # Charger les paramètres depuis params.yaml
 with open("params.yaml", "r") as f:
@@ -21,6 +22,17 @@ def train_model(data_dir, model_output_dir):
     all_losses_train = []
     all_losses_val = []
 
+    # Lire l'identifiant du run depuis le fichier
+    with open("wandb_run_id.txt", "r") as f:
+        run_id = f.read().strip()
+
+    # Rejoindre le run existant
+    wandb.init(
+        project="sports-classification",
+        id=run_id,
+        resume="allow"
+    )
+
     # Initialiser le feature extractor
     feature_extractor = EfficientNetImageProcessor.from_pretrained(model_name)
 
@@ -30,11 +42,11 @@ def train_model(data_dir, model_output_dir):
     fold_size = dataset_size // num_folds
     indices = np.arange(dataset_size)
 
-    for fold in range(num_folds):
-        print(f"Entraînement pour le fold {fold + 1}/{num_folds}")
+    for fold in range(1, num_folds + 1):
+        print(f"Entraînement pour le fold {fold}/{num_folds}")
 
         # Diviser les indices pour le train et la validation
-        val_indices = indices[fold * fold_size:(fold + 1) * fold_size]
+        val_indices = indices[(fold - 1) * fold_size:fold * fold_size]
         train_indices = np.setdiff1d(indices, val_indices)
 
         train_subset = Subset(dataset, train_indices)
@@ -53,6 +65,7 @@ def train_model(data_dir, model_output_dir):
         optimizer = Adam(model.parameters(), lr=params['train']['lr'])
         model.train()
 
+        # Initialiser les listes pour les pertes par époque dans un fold
         losses_train = []
         losses_val = []
 
@@ -60,6 +73,7 @@ def train_model(data_dir, model_output_dir):
             # Boucle d'entraînement
             model.train()
             epoch_loss_train = 0
+            epoch_accuracy_train = 0
             for batch in tqdm(train_dataloader):
                 inputs = batch['pixel_values'].squeeze(1)
                 labels = batch['labels']
@@ -72,11 +86,16 @@ def train_model(data_dir, model_output_dir):
                 optimizer.step()
 
                 epoch_loss_train += loss.item()
-            losses_train.append(epoch_loss_train / len(train_dataloader))
+                epoch_accuracy_train += calculate_accuracy(outputs.logits, labels)
+
+            # Moyenne des métriques pour cette epoch
+            train_loss = epoch_loss_train / len(train_dataloader)
+            train_accuracy = epoch_accuracy_train / len(train_dataloader)
 
             # Boucle de validation
             model.eval()
             epoch_loss_val = 0
+            epoch_accuracy_val = 0
             with torch.no_grad():
                 for batch in val_dataloader:
                     inputs = batch['pixel_values'].squeeze(1)
@@ -85,16 +104,26 @@ def train_model(data_dir, model_output_dir):
                     outputs = model(pixel_values=inputs, labels=labels)
                     loss = outputs.loss
                     epoch_loss_val += loss.item()
-            losses_val.append(epoch_loss_val / len(val_dataloader))
+                    epoch_accuracy_val += calculate_accuracy(outputs.logits, labels)
 
-            print(f"Fold {fold + 1}, Époque {epoch + 1}, Perte entraînement : {losses_train[-1]:.4f}, Perte validation : {losses_val[-1]:.4f}")
+            # Moyenne des métriques pour cette epoch
+            val_loss = epoch_loss_val / len(val_dataloader)
+            val_accuracy = epoch_accuracy_val / len(val_dataloader)
 
+            # Ajouter les pertes pour cette epoch aux listes locales
+            losses_train.append(train_loss)
+            losses_val.append(val_loss)
+
+            # Logger les métriques dans W&B
+            log_metrics_to_wandb(epoch, train_loss, val_loss, train_accuracy, val_accuracy)
+
+        # Ajouter les pertes pour ce fold aux listes globales
         all_losses_train.append(losses_train)
         all_losses_val.append(losses_val)
 
-    # Calculer la perte moyenne sur tous les folds
-    mean_losses_train = np.mean(all_losses_train, axis=0)
-    mean_losses_val = np.mean(all_losses_val, axis=0)
+    # Calculer la moyenne des pertes d'entraînement et de validation sur tous les folds
+    mean_losses_train = np.mean(all_losses_train, axis=0)  # Moyenne des pertes d'entraînement
+    mean_losses_val = np.mean(all_losses_val, axis=0)      # Moyenne des pertes de validation
 
     # Plot les pertes
     epochs = range(1, params['train']['epochs'] + 1)
@@ -106,8 +135,10 @@ def train_model(data_dir, model_output_dir):
     plt.legend()
 
     # Enregistrer le graphique
+    loss_plot_path = os.path.join(model_output_dir, 'loss_curve.png')
+
     os.makedirs(model_output_dir, exist_ok=True)
-    plt.savefig(os.path.join(model_output_dir, 'loss_curve.png'))
+    plt.savefig(loss_plot_path)
     plt.close()
 
     # Sauvegarder le modèle
