@@ -12,7 +12,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Activer le compte de service avec le fichier service-account-key.json
+      # Créez un fichier credentials à partir du secret GitHub
+      - name: Create service account key from secret
+        run: echo "${{ secrets.GOOGLE_CREDENTIALS }}" > service-account-key.json
+
+      # Activer le compte de service avec le fichier généré
       - name: Activate Service Account
         run: |
           gcloud auth activate-service-account --key-file="service-account-key.json"
