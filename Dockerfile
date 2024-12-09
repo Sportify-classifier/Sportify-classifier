@@ -26,6 +26,7 @@ RUN pip install dvc[gcs]
 
 # Copier tout le code de l'application dans le conteneur
 COPY . .
+COPY .git /app/.git
 
 # Créer et configurer le fichier service-account-key.json
 RUN echo '{ \
