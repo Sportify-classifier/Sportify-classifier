@@ -28,17 +28,17 @@ RUN pip install dvc[gcs]
 COPY . .
 
 # Créer et configurer le fichier service-account-key.json
-RUN echo '{
-  "type": "service_account",
-  "project_id": "modern-bond-303506",
-  "private_key_id": "your_private_key_id",
-  "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
-  "client_email": "sportify-classier@modern-bond-303506.iam.gserviceaccount.com",
-  "client_id": "your_client_id",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/sportify-classier%40modern-bond-303506.iam.gserviceaccount.com"
+RUN echo '{ \
+  "type": "service_account", \
+  "project_id": "modern-bond-303506", \
+  "private_key_id": "your_private_key_id", \
+  "private_key": "-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----\\n", \
+  "client_email": "sportify-classier@modern-bond-303506.iam.gserviceaccount.com", \
+  "client_id": "your_client_id", \
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth", \
+  "token_uri": "https://oauth2.googleapis.com/token", \
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs", \
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/sportify-classier%40modern-bond-303506.iam.gserviceaccount.com" \
 }' > /app/service-account-key.json
 
 # Définir la variable d'environnement pour Google Cloud
