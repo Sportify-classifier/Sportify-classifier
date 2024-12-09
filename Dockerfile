@@ -15,12 +15,11 @@ RUN pip install dvc[gcs]
 COPY . .
 
 # Renommer dynamiquement le fichier `gha-creds-*.json` en `gha-creds.json`
-RUN mv /app/gha-creds-*.json /app/gha-creds.json
+RUN mv /app/gha-creds-*.json /app/gha-creds.json || echo "GHA credentials file not found, skipping rename"
 
 # Vérifier la présence des fichiers et de `.git`
-RUN ls -la
 RUN ls -la /app
-RUN ls -la /app && git status || echo "Git repository not found"
+RUN git status || echo "Git repository not found (expected in CI/CD environments without git)"
 
 # Définir la variable d'environnement pour Google Cloud
 ENV GOOGLE_APPLICATION_CREDENTIALS="/app/gha-creds.json"

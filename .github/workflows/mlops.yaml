@@ -19,12 +19,11 @@ jobs:
           credentials_json: '${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}'
 
       - name: Configure gcloud
-        run: |
-          gcloud config set project modern-bond-303506
+        run: gcloud config set project modern-bond-303506
 
-      # Installer uniquement DVC avec support GCS pour gérer les modèles et métriques au niveau du CI
-      - name: Install DVC
-        run: pip install dvc[gcs]
+      # Vérifier les permissions sur le bucket
+      - name: Check GCS Bucket Access
+        run: gsutil ls gs://sportify_classifier || echo "Bucket access failed, ensure credentials and permissions are correct"
 
       # Construire l'image Docker et la pousser sur GCR
       - name: Build and push Docker image
@@ -47,18 +46,14 @@ jobs:
           STATUS=$(gcloud ai custom-jobs describe "${JOB_ID}" --region=us-central1 --format='value(state)')
           while [ "$STATUS" != "SUCCEEDED" ] && [ "$STATUS" != "FAILED" ]; do
             echo "Job status: $STATUS"
-
-            # Récupérer les logs du job
             echo "Fetching logs for Job ID: ${JOB_ID}..."
             gcloud logging read "resource.type=ml_job AND resource.labels.job_id=\"${JOB_ID}\"" --limit=50 --format="value(textPayload)"
-
             sleep 30
             STATUS=$(gcloud ai custom-jobs describe "${JOB_ID}" --region=us-central1 --format='value(state)')
           done
 
           echo "Final job status: $STATUS"
           if [ "$STATUS" = "FAILED" ]; then
-            # Afficher les dernières erreurs dans les logs
             echo "Fetching detailed logs for failure..."
             gcloud logging read "resource.type=ml_job AND resource.labels.job_id=\"${JOB_ID}\"" --limit=100 --format="value(textPayload)"
             exit 1
@@ -67,7 +62,6 @@ jobs:
           JOB_ID: ${{ env.JOB_ID }}
 
       # Récupérer le modèle et les métriques depuis GCS
-      # Assurez-vous que dans votre pipeline DVC, l'étape 'evaluate' ou vos scripts copient les artefacts finaux dans gs://sportify_classifier/training-outputs/
       - name: Pull new model and metrics from GCS
         run: |
           gsutil cp -r gs://sportify_classifier/training-outputs/model_versions .
