@@ -21,11 +21,20 @@ jobs:
       - name: Configure gcloud
         run: gcloud config set project modern-bond-303506
 
+      # Configurer les credentials pour GCS
+      - name: Configure Google Application Credentials
+        run: echo "Setting up GOOGLE_APPLICATION_CREDENTIALS"
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+
       # Vérifier les permissions sur le bucket
       - name: Check GCS Bucket Access
         run: |
           echo "Testing GCS access..."
+          echo "Using credentials file: $GOOGLE_APPLICATION_CREDENTIALS"
           gsutil ls gs://sportify_classifier || echo "Bucket access failed, ensure credentials and permissions are correct"
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /home/runner/work/Sportify-classifier/Sportify-classifier/gha-creds-*.json
 
       # Construire l'image Docker et la pousser sur GCR
       - name: Build and push Docker image
