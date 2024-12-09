@@ -17,6 +17,22 @@ jobs:
         run: |
           gcloud auth activate-service-account --key-file="service-account-key.json"
 
+      - name: List files in context
+        run: ls -la
+
+      - name: Check for .dockerignore
+        run: |
+          if [ -f .dockerignore ]; then
+            echo ".dockerignore exists:"
+            cat .dockerignore
+          else
+            echo "No .dockerignore found"
+          fi
+
+      # Vérifier le fichier généré
+      - name: Verify service-account-key.json
+        run: ls -la && cat service-account-key.json
+
       # Configurer le projet GCP
       - name: Configure gcloud
         run: gcloud config set project modern-bond-303506
@@ -27,6 +43,9 @@ jobs:
           echo "Testing GCS access..."
           gsutil ls gs://sportify_classifier || echo "Bucket access failed, ensure credentials and permissions are correct"
 
+      - name: Copy service-account-key.json to /app
+        run: cp service-account-key.json /app/
+        
       # Construire l'image Docker et la pousser sur GCR
       - name: Build and push Docker image
         run: gcloud builds submit --tag gcr.io/modern-bond-303506/train_image:latest .
