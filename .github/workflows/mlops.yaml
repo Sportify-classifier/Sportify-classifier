@@ -12,12 +12,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Copier le fichier de clé de service depuis le dépôt
-      - name: Use service-account-key.json from repo
-        run: |
-          echo "Setting up service-account-key.json"
-          cp service-account-key.json /home/runner/work/Sportify-classifier/Sportify-classifier/
-
       # Configurer les credentials Google
       - name: Configure Google Application Credentials
         run: |
