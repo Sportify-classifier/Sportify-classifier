@@ -1,17 +1,20 @@
 FROM python:3.11-slim
 
-# Installer les dépendances nécessaires, y compris git et curl pour installer gcloud
+# Installer les dépendances nécessaires, y compris gnupg pour la gestion des clés GPG
 RUN apt-get update && apt-get install -y \
     git \
     curl \
-    gnupg && \
-    rm -rf /var/lib/apt/lists/*
+    gnupg \
+    && rm -rf /var/lib/apt/lists/*
 
-# Ajouter le dépôt officiel pour gcloud et installer le SDK Google Cloud
-RUN curl -sSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
-    echo "deb http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
-    apt-get update && apt-get install -y google-cloud-sdk && \
-    rm -rf /var/lib/apt/lists/*
+# Ajouter la clé GPG de Google Cloud et la stocker dans /usr/share/keyrings/
+RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --dearmor -o /usr/share/keyrings/google-cloud-archive.gpg
+
+# Ajouter le dépôt APT de Google Cloud avec l'attribut signed-by
+RUN echo "deb [signed-by=/usr/share/keyrings/google-cloud-archive.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee /etc/apt/sources.list.d/google-cloud-sdk.list
+
+# Mettre à jour les listes de paquets et installer le SDK Google Cloud
+RUN apt-get update && apt-get install -y google-cloud-sdk && rm -rf /var/lib/apt/lists/*
 
 # Définir le répertoire de travail
 WORKDIR /app
