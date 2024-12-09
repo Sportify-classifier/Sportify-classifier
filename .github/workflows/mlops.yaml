@@ -38,9 +38,9 @@ jobs:
             --region=us-central1 \
             --display-name="entraînement-mlops" \
             --worker-pool-spec=machine-type=n1-standard-4,container-image-uri=gcr.io/modern-bond-303506/train_image:latest \
-            --command=dvc \
-            --args=repro \
-            --args=--pull \
+            --command=bash \
+            --args=-c \
+            --args="dvc init --no-scm && dvc repro --pull" \
             --format='value(name)')
           echo "JOB_ID=$JOB_ID" >> $GITHUB_ENV
 
