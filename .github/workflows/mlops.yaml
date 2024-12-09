@@ -43,9 +43,6 @@ jobs:
           echo "Testing GCS access..."
           gsutil ls gs://sportify_classifier || echo "Bucket access failed, ensure credentials and permissions are correct"
 
-      - name: Copy service-account-key.json to /app
-        run: cp service-account-key.json /app/
-        
       # Construire l'image Docker et la pousser sur GCR
       - name: Build and push Docker image
         run: gcloud builds submit --tag gcr.io/modern-bond-303506/train_image:latest .
