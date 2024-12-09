@@ -12,20 +12,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Définir la clé de service en tant que fichier
-      - name: Setup Google Cloud credentials
-        run: |
-          # Copier le fichier service-account-key.json depuis le repo
-          cp service-account-key.json /tmp/service-account-key.json
-          # Exporter la variable d'environnement pour les commandes GCP
-          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/service-account-key.json" >> $GITHUB_ENV
-
-      - name: Configure gcloud
-        run: gcloud config set project modern-bond-303506
+      # Authentification à GCP
+      - name: Login to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}'
 
       # Vérifier les permissions sur le bucket
       - name: Check GCS Bucket Access
         run: |
+          echo "Testing GCS access..."
+          export GOOGLE_APPLICATION_CREDENTIALS=$(find /home/runner/work -name "gha-creds-*.json" | head -n 1)
+          echo "Using credentials file: $GOOGLE_APPLICATION_CREDENTIALS"
           gsutil ls gs://sportify_classifier || echo "Bucket access failed, ensure credentials and permissions are correct"
 
       # Construire l'image Docker et la pousser sur GCR
@@ -63,19 +61,3 @@ jobs:
           fi
         env:
           JOB_ID: ${{ env.JOB_ID }}
-
-      # Récupérer le modèle et les métriques depuis GCS
-      - name: Pull new model and metrics from GCS
-        run: |
-          gsutil cp -r gs://sportify_classifier/training-outputs/model_versions .
-          gsutil cp -r gs://sportify_classifier/training-outputs/evaluation_outputs .
-
-      # Mettre à jour DVC avec le nouveau modèle et métriques
-      - name: DVC add and push
-        run: |
-          dvc add model_versions
-          dvc add evaluation_outputs/metrics.json
-          git add model_versions.dvc evaluation_outputs/metrics.json.dvc
-          git commit -m "Add new model and metrics"
-          dvc push
-          git push
