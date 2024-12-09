@@ -12,10 +12,14 @@ RUN pip install dvc[gcs]
 # Copier tout le code
 COPY . .
 
+# Ajouter un ARG pour accepter la clé et l'écrire dans un fichier
+ARG GOOGLE_CREDENTIALS
+RUN echo "$GOOGLE_CREDENTIALS" > /app/gha-creds.json
+
 # Vérifier la présence de .git
 RUN ls -la
 RUN ls -la /app
 RUN ls -la /app && git status || echo "Git repository not found"
 
 # Par défaut, lancer `dvc repro --pull` à chaque démarrage du conteneur
-CMD ["bash", "-c", "echo 'Current directory:' && pwd && echo 'Listing files:' && ls -la && echo 'Running DVC...' && dvc repro --pull && echo 'DVC pipeline finished.' && bash"]
+CMD ["bash", "-c", "echo 'Current directory:' && pwd && echo 'Listing files:' && ls -la && echo 'Testing GCS access...' && gsutil ls gs://sportify_classifier && echo 'Running DVC...' && dvc repro --pull 2>&1 | tee dvc_logs.txt && echo 'Pipeline finished.' && bash"]
