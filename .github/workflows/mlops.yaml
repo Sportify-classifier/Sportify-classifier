@@ -12,22 +12,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Configurer les credentials Google
-      - name: Configure Google Application Credentials
+      # Activer le compte de service avec le fichier service-account-key.json
+      - name: Activate Service Account
         run: |
-          export GOOGLE_APPLICATION_CREDENTIALS="/home/runner/work/Sportify-classifier/Sportify-classifier/service-account-key.json"
-          echo $GOOGLE_APPLICATION_CREDENTIALS
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: "/home/runner/work/Sportify-classifier/Sportify-classifier/service-account-key.json"
+          gcloud auth activate-service-account --key-file="service-account-key.json"
 
-      # Vérifier les permissions sur le bucket GCS
+      # Configurer le projet GCP
+      - name: Configure gcloud
+        run: gcloud config set project modern-bond-303506
+
+      # Vérifier les permissions sur le bucket
       - name: Check GCS Bucket Access
         run: |
           echo "Testing GCS access..."
-          echo "Using credentials file: $GOOGLE_APPLICATION_CREDENTIALS"
           gsutil ls gs://sportify_classifier || echo "Bucket access failed, ensure credentials and permissions are correct"
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: "/home/runner/work/Sportify-classifier/Sportify-classifier/service-account-key.json"
 
       # Construire l'image Docker et la pousser sur GCR
       - name: Build and push Docker image
@@ -65,15 +63,12 @@ jobs:
           fi
         env:
           JOB_ID: ${{ env.JOB_ID }}
-          GOOGLE_APPLICATION_CREDENTIALS: "/home/runner/work/Sportify-classifier/Sportify-classifier/service-account-key.json"
 
       # Récupérer le modèle et les métriques depuis GCS
       - name: Pull new model and metrics from GCS
         run: |
           gsutil cp -r gs://sportify_classifier/training-outputs/model_versions .
           gsutil cp -r gs://sportify_classifier/training-outputs/evaluation_outputs .
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: "/home/runner/work/Sportify-classifier/Sportify-classifier/service-account-key.json"
 
       # Mettre à jour DVC avec le nouveau modèle et métriques
       - name: DVC add and push
