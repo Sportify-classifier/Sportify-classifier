@@ -17,5 +17,5 @@ RUN ls -la
 RUN ls -la /app
 RUN ls -la /app && git status || echo "Git repository not found"
 
-# Par défaut, le conteneur lance un shell (vous spécifierez la commande lors du job Vertex)
-CMD ["bash"]
+# Par défaut, lancer `dvc repro --pull` à chaque démarrage du conteneur
+CMD ["bash", "-c", "echo 'Current directory:' && pwd && echo 'Listing files:' && ls -la && echo 'Running DVC...' && dvc repro --pull && echo 'DVC pipeline finished.' && bash"]
