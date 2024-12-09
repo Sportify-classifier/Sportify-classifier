@@ -9,12 +9,14 @@ stages:
       - data
     outs:
       - data/prepared
+      - wandb_run_id.txt
 
   train:
     cmd: python train.py data/prepared model_versions
     deps:
       - data/prepared
       - train.py
+      - wandb_run_id.txt
     params:
       - train
       - model
@@ -27,6 +29,7 @@ stages:
       - data/prepared
       - evaluate.py
       - model_versions
+      - wandb_run_id.txt
     metrics:
       - evaluation_outputs/metrics.json
     plots:

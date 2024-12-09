@@ -22,7 +22,8 @@ from sklearn.metrics import (
 from sklearn.preprocessing import label_binarize
 from transformers import EfficientNetImageProcessor, EfficientNetForImageClassification
 from torch.utils.data import DataLoader
-from utils import SportsDataset
+from utils import SportsDataset, log_class_metrics_to_wandb, log_artifact_to_wandb
+import wandb
 
 # Charger les paramètres depuis params.yaml
 with open("params.yaml", "r") as f:
@@ -49,11 +50,13 @@ def plot_precision_recall_curves(all_labels, all_predictions, classes, output_di
     # Binariser les labels et les prédictions
     y_test = label_binarize(all_labels, classes=range(len(classes)))
     y_score = label_binarize(all_predictions, classes=range(len(classes)))
+
     plt.figure(figsize=(10, 8))
     for i in range(len(classes)):
         precision, recall, _ = precision_recall_curve(y_test[:, i], y_score[:, i])
         average_precision = average_precision_score(y_test[:, i], y_score[:, i])
         plt.step(recall, precision, where='post', label=f'{classes[i]} (AP={average_precision:.2f})')
+
     plt.xlabel('Recall')
     plt.ylabel('Precision')
     plt.title('Courbe Precision-Recall')
@@ -68,6 +71,7 @@ def generate_html_report(metrics, output_dir):
     <h2>Métriques</h2>
     <pre>{}</pre>
     '''.format(json.dumps(metrics, indent=4))
+
     # Liste des graphiques à inclure
     plots = [
         'loss_curve.png',
@@ -75,6 +79,7 @@ def generate_html_report(metrics, output_dir):
         'normalized_confusion_matrix.png',
         'precision_recall_curves.png'
     ]
+
     # Construire le contenu HTML
     html_content = f"""
     <html>
@@ -85,25 +90,27 @@ def generate_html_report(metrics, output_dir):
         <h1>Rapport d'Évaluation du Modèle</h1>
         {metrics_html}
     """
+
     for plot in plots:
         if os.path.exists(os.path.join(output_dir, plot)):
             html_content += f"""
             <h2>{plot.replace('_', ' ').title()}</h2>
-            <img src="{plot}" alt="{plot}" style="max-width:100%;">
+            <img src="{plot}" alt="{plot}" style="max-width:100%; height:auto;">
             """
+
     html_content += """
     </body>
     </html>
     """
+
     # Sauvegarder le rapport HTML
     with open(os.path.join(output_dir, 'report.html'), 'w') as f:
         f.write(html_content)
     print(f"Rapport HTML sauvegardé dans {os.path.join(output_dir, 'report.html')}")
 
 def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
-    # Définir le répertoire de sortie fixe pour DVC
-    output_dir = evaluation_versions_dir  # Ce sera 'evaluation_outputs'
-    os.makedirs(output_dir, exist_ok=True)
+    # Créer un dossier versionné pour les évaluations
+    output_dir = create_versioned_dir(evaluation_versions_dir, 'model')
 
     # Initialiser le feature extractor et le modèle
     feature_extractor = EfficientNetImageProcessor.from_pretrained(model_dir)
@@ -128,6 +135,12 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
             all_labels.extend(labels.cpu().numpy())
             all_predictions.extend(predicted.cpu().numpy())
 
+    # Initialiser W&B pour l'évaluation
+    # Lire l'identifiant du run depuis le fichier
+    with open("wandb_run_id.txt", "r") as f:
+        run_id = f.read().strip()
+
+
     # Calcul des métriques
     accuracy = accuracy_score(all_labels, all_predictions)
     f1 = f1_score(all_labels, all_predictions, average='weighted')
@@ -146,6 +159,7 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
     )
 
     # Sauvegarder les métriques
+    os.makedirs(output_dir, exist_ok=True)
     metrics = {
         'accuracy': accuracy,
         'precision_weighted': precision,
@@ -159,6 +173,7 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
         json.dump(metrics, f, indent=4)
     print(f"Métriques sauvegardées dans {os.path.join(output_dir, 'metrics.json')}")
 
+
     # Matrice de confusion
     cm = confusion_matrix(all_labels, all_predictions)
     plt.figure(figsize=(10, 8))
@@ -166,9 +181,10 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
     plt.xlabel('Prédictions')
     plt.ylabel('Vérités terrain')
     plt.title('Matrice de confusion')
-    plt.savefig(os.path.join(output_dir, 'confusion_matrix.png'))
+    confusion_matrix_path = os.path.join(output_dir, 'confusion_matrix.png')
+    plt.savefig(confusion_matrix_path)
     plt.close()
-    print(f"Matrice de confusion sauvegardée dans {os.path.join(output_dir, 'confusion_matrix.png')}")
+    print(f"Matrice de confusion sauvegardée dans {confusion_matrix_path}")
 
     # Matrice de confusion normalisée
     cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
@@ -184,6 +200,25 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
     # Courbes Precision-Recall
     plot_precision_recall_curves(all_labels, all_predictions, test_dataset.classes, output_dir)
 
+    # Rejoindre le run existant
+    wandb.init(
+        project="sports-classification",
+        id=run_id,
+        resume="allow"
+    )
+
+    # Loguer l'image de la matrice de confusion dans W&B
+    wandb.log({"Confusion Matrix Heatmap": wandb.Image(confusion_matrix_path)})
+
+    # Logguez les métriques et les courbes
+    wandb.log({"accuracy": accuracy, "f1-score": f1, "precision": precision, "recall": recall})
+
+    # Extraire les noms des classes
+    classes = test_dataset.classes
+
+    # Logger les métriques de précision, rappel et F1-score par classe
+    log_class_metrics_to_wandb(classif_report, classes) 
+
     # Copier la courbe de perte depuis le dossier du modèle
     loss_curve_src = os.path.join(model_dir, 'loss_curve.png')
     loss_curve_dst = os.path.join(output_dir, 'loss_curve.png')
@@ -197,9 +232,16 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
     # Générer le rapport HTML
     generate_html_report(metrics, output_dir)
 
-    # Après avoir sauvegardé les outputs, copier vers le dossier versionné pour archivage
-    versioned_dir = create_versioned_dir(evaluation_versions_dir, 'model')
-    os.makedirs(versioned_dir, exist_ok=True)
+    # Log des artefacts d'évaluation dans W&B
+    log_artifact_to_wandb("evaluation_results", "evaluation", output_dir)
+
+    # Terminer le run W&B
+    wandb.finish()
+
+    # Copier les outputs dans un répertoire fixe pour DVC
+    fixed_output_dir = 'evaluation_outputs'
+    os.makedirs(fixed_output_dir, exist_ok=True)
+    # Liste des fichiers à copier
     output_files = [
         'metrics.json',
         'loss_curve.png',
@@ -211,22 +253,26 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
     from shutil import copyfile
     for file_name in output_files:
         src_file = os.path.join(output_dir, file_name)
-        dst_file = os.path.join(versioned_dir, file_name)
+        dst_file = os.path.join(fixed_output_dir, file_name)
         if os.path.exists(src_file):
-            copyfile(src_file, dst_file)
-            print(f"Fichier {file_name} copié dans le répertoire versionné {versioned_dir}")
-        else:
-            print(f"Le fichier {file_name} n'existe pas dans {output_dir}")
+            if os.path.abspath(src_file) != os.path.abspath(dst_file):
+                copyfile(src_file, dst_file)
+                print(f"Fichier {file_name} copié dans {fixed_output_dir}")
+            else:
+                print(f"Le fichier source et destination sont identiques pour {file_name}, pas de copie effectuée.")
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
         print("Usage: python evaluate.py <model_versions_dir> <data_prepared_dir> <evaluation_versions_dir>")
         sys.exit(1)
+
     model_versions_dir = sys.argv[1]
     data_prepared_dir = sys.argv[2]
     evaluation_versions_dir = sys.argv[3]
+
     # Obtenir le dernier dossier de modèle
     model_dir = get_latest_model_dir(model_versions_dir)
     data_dir = os.path.join(data_prepared_dir, 'test')
+
     # Appeler la fonction d'évaluation
     evaluate_model(model_dir=model_dir, data_dir=data_dir, evaluation_versions_dir=evaluation_versions_dir)

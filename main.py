@@ -7,6 +7,8 @@ import torch
 import numpy as np
 from transformers import logging
 
+#PLUS BESOIN D'UTILISER CE FICHIER APRES AVOIR CREER LA PIPELINE
+
 with open("params.yaml", "r") as f:
     params = yaml.safe_load(f)
 
