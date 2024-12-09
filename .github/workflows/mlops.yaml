@@ -34,7 +34,7 @@ jobs:
             --tag gcr.io/modern-bond-303506/train_image:latest \
             --config=cloudbuild.yaml
 
-      # Lancer le job Vertex AI
+      # Lancer le job Vertex AI #
       - name: Launch Vertex AI job
         id: launch_job
         run: |
