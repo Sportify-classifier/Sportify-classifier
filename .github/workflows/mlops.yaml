@@ -31,7 +31,10 @@ jobs:
 
       # Vérifier le fichier généré
       - name: Verify service-account-key.json
-        run: ls -la && cat service-account-key.json
+        run: |
+          echo "Verifying service-account-key.json..."
+          ls -la service-account-key.json
+          cat service-account-key.json || echo "Unable to read service-account-key.json"
 
       # Configurer le projet GCP
       - name: Configure gcloud
@@ -45,23 +48,28 @@ jobs:
 
       # Construire l'image Docker et la pousser sur GCR
       - name: Build and push Docker image
-        run: gcloud builds submit --tag gcr.io/modern-bond-303506/train_image:latest .
+        run: |
+          echo "Building Docker image and pushing to GCR..."
+          gcloud builds submit --tag gcr.io/modern-bond-303506/train_image:latest .
 
       # Lancer le job Vertex AI
       - name: Launch Vertex AI job
         id: launch_job
         run: |
+          echo "Launching Vertex AI Job..."
           JOB_ID=$(gcloud ai custom-jobs create \
             --region=us-central1 \
             --display-name="entraînement-mlops" \
             --worker-pool-spec=machine-type=n1-standard-4,container-image-uri=gcr.io/modern-bond-303506/train_image:latest \
             --service-account=sportify-classier@modern-bond-303506.iam.gserviceaccount.com \
             --format='value(name)')
+          echo "Vertex AI Job ID: $JOB_ID"
           echo "JOB_ID=$JOB_ID" >> $GITHUB_ENV
 
       # Attendre la fin du job Vertex AI
       - name: Wait for job to finish
         run: |
+          echo "Waiting for Vertex AI Job to finish..."
           STATUS=$(gcloud ai custom-jobs describe "${JOB_ID}" --region=us-central1 --format='value(state)')
           while [ "$STATUS" != "SUCCEEDED" ] && [ "$STATUS" != "FAILED" ]; do
             echo "Job status: $STATUS"
@@ -83,12 +91,14 @@ jobs:
       # Récupérer le modèle et les métriques depuis GCS
       - name: Pull new model and metrics from GCS
         run: |
+          echo "Pulling model and metrics from GCS..."
           gsutil cp -r gs://sportify_classifier/training-outputs/model_versions .
           gsutil cp -r gs://sportify_classifier/training-outputs/evaluation_outputs .
 
       # Mettre à jour DVC avec le nouveau modèle et métriques
       - name: DVC add and push
         run: |
+          echo "Updating DVC with new model and metrics..."
           dvc add model_versions
           dvc add evaluation_outputs/metrics.json
           git add model_versions.dvc evaluation_outputs/metrics.json.dvc
