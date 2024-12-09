@@ -14,7 +14,7 @@ jobs:
 
       # Créez un fichier credentials à partir du secret GitHub
       - name: Create service account key from secret
-        run: echo "${{ secrets.GOOGLE_CREDENTIALS }}" > service-account-key.json
+        run: echo "${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}" > service-account-key.json
 
       # Activer le compte de service avec le fichier généré
       - name: Activate Service Account
