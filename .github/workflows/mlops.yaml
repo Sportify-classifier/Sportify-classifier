@@ -28,13 +28,9 @@ jobs:
 
       # Construire l'image Docker et la pousser sur GCR
       - name: Build and push Docker image
-        run: |
-          echo "${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}" > google-credentials.json
-          gcloud builds submit \
-            --tag gcr.io/modern-bond-303506/train_image:latest \
-            --config=cloudbuild.yaml
+        run: gcloud builds submit --tag gcr.io/modern-bond-303506/train_image:latest .
 
-      # Lancer le job Vertex AI #
+      # Lancer le job Vertex AI
       - name: Launch Vertex AI job
         id: launch_job
         run: |

@@ -12,11 +12,9 @@ RUN pip install dvc[gcs]
 # Copier tout le code
 COPY . .
 
-# Ajouter un fichier de configuration temporaire pour les credentials
-ARG GOOGLE_CREDENTIALS
-RUN echo "$GOOGLE_CREDENTIALS" > /app/gha-creds.json
-
 # Vérifier la présence de .git
+RUN ls -la
+RUN ls -la /app
 RUN ls -la /app && git status || echo "Git repository not found"
 
 # Par défaut, lancer `dvc repro --pull` à chaque démarrage du conteneur
