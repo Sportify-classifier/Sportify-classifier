@@ -56,4 +56,4 @@ RUN gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENT
 RUN gsutil ls gs://sportify_classifier || echo "GCS access failed, ensure credentials and permissions are correct"
 
 # Définir le comportement par défaut
-CMD ["bash", "-c", "echo 'Running pipeline...' && dvc repro --pull && echo 'Pipeline finished.' && bash"]
+CMD ["bash", "-c", "echo 'Running pipeline...' && dvc init --no-scm && dvc repro --pull && echo 'Pipeline finished.' && bash"]
