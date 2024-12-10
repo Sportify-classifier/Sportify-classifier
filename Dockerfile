@@ -20,8 +20,6 @@ RUN apt-get update && apt-get install -y google-cloud-sdk && rm -rf /var/lib/apt
 WORKDIR /app
 
 # Cloner le dépôt GitHub en utilisant le Personal Access Token
-ARG COMMIT_SHA
-
 RUN git clone https://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@github.com/Sportify-classifier/Sportify-classifier.git /app
 
 # Installer les dépendances Python
@@ -37,6 +35,8 @@ RUN gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENT
 
 # Vérifier l'accès à GCS
 RUN gsutil ls gs://sportify_classifier || echo "GCS access failed, ensure credentials and permissions are correct"
+
+RUN wandb login bc8308d7e10725fb223ccc2077268a501b60b19d
 
 # Définir le comportement par défaut
 CMD ["bash", "-c", "echo 'Running pipeline...' && pwd && ls -la && dvc repro --pull && echo 'Pipeline finished.' && bash"]
