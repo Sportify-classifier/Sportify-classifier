@@ -20,11 +20,9 @@ RUN apt-get update && apt-get install -y google-cloud-sdk && rm -rf /var/lib/apt
 WORKDIR /app
 
 # Cloner le dépôt GitHub en utilisant le Personal Access Token
-ARG GITHUB_TOKEN
-ARG REPO_URL
 ARG COMMIT_SHA
 
-RUN git clone https://${GITHUB_TOKEN}@${REPO_URL} /app && \
+RUN git clone https://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@github.com/Sportify-classifier/Sportify-classifier.git /app && \
     cd /app && \
     git checkout ${COMMIT_SHA}
 
