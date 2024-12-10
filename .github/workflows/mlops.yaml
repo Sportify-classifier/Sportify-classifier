@@ -35,8 +35,6 @@ jobs:
         run: |
           echo "Building Docker image and pushing to GCR..."
           gcloud builds submit --tag gcr.io/modern-bond-303506/train_image:latest -- \
-            --build-arg GITHUB_TOKEN=${{ secrets.SECRET }} \
-            --build-arg REPO_URL=github.com/Sportify-classifier/Sportify-classifier.git \
             --build-arg COMMIT_SHA=${{ github.sha }}
 
       # Lancer le job Vertex AI
