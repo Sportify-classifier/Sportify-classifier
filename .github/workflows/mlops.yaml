@@ -20,22 +20,6 @@ jobs:
       - name: List files in context
         run: ls -la
 
-      - name: Check for .dockerignore
-        run: |
-          if [ -f .dockerignore ]; then
-            echo ".dockerignore exists:"
-            cat .dockerignore
-          else
-            echo "No .dockerignore found"
-          fi
-
-      # Vérifier le fichier généré
-      - name: Verify service-account-key.json
-        run: |
-          echo "Verifying service-account-key.json..."
-          ls -la service-account-key.json
-          cat service-account-key.json || echo "Unable to read service-account-key.json"
-
       # Configurer le projet GCP
       - name: Configure gcloud
         run: gcloud config set project modern-bond-303506
@@ -50,7 +34,10 @@ jobs:
       - name: Build and push Docker image
         run: |
           echo "Building Docker image and pushing to GCR..."
-          gcloud builds submit --tag gcr.io/modern-bond-303506/train_image:latest .
+          gcloud builds submit --tag gcr.io/modern-bond-303506/train_image:latest -- \
+            --build-arg GITHUB_TOKEN=${{ secrets.SECRET }} \
+            --build-arg REPO_URL=github.com/Sportify-classifier/Sportify-classifier.git \
+            --build-arg COMMIT_SHA=${{ github.sha }}
 
       # Lancer le job Vertex AI
       - name: Launch Vertex AI job
