@@ -10,7 +10,4 @@ matplotlib
 seaborn
 pyyaml==6.0.2
 dvc[gs]==3.53.2
-wandb
-
-wandb
-
+wandb==0.19.0
