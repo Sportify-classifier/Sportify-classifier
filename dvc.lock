@@ -10,53 +10,60 @@ stages:
       nfiles: 14493
     - path: data_loader.py
       hash: md5
-      md5: dc015fbc5195283045e6836ba03ced65
-      size: 370
+      md5: e4ff74eb3be0a946f9fb14f1ab247078
+      size: 1995
     params:
       params.yaml:
         data:
-          dir: ./data/all_dataJ
+          dir: ./data/all_data
         prepare:
           seed: 42
           split: 0.3
-          sample_fraction: 1
+          sample_fraction: 0.2
           excluded_classes:
           - sky surfing
           max_images_per_class: 107
+        train:
+          seed: 42
+          lr: 0.005
+          epochs: 2
+          batch_size: 16
+          num_classes: 10
+          num_folds: 2
     outs:
     - path: data/prepared
       hash: md5
-      md5: 964ec324c2b9a99ba860757511325f5a.dir
-      size: 18723116
-      nfiles: 749
+      md5: 259302cb53c22ad259108042e9b2c621.dir
+      size: 5138578
+      nfiles: 210
   train:
     cmd: python train.py data/prepared model_versions
     deps:
     - path: data/prepared
       hash: md5
-      md5: 964ec324c2b9a99ba860757511325f5a.dir
-      size: 18723116
-      nfiles: 749
+      md5: 259302cb53c22ad259108042e9b2c621.dir
+      size: 5138578
+      nfiles: 210
     - path: train.py
       hash: md5
-      md5: af43e27fdf67a8ea1109d9ff5c0f9f95
-      size: 4943
+      md5: ee0147ad08bf3c647b49863bae1f13a4
+      size: 6349
     params:
       params.yaml:
         model:
           name: google/efficientnet-b0
         train:
           seed: 42
-          lr: 5e-05
+          lr: 0.005
           epochs: 2
-          batch_size: 9
-          num_classes: 7
-          num_folds: 3
+          batch_size: 16
+          num_classes: 10
+          num_folds: 2
     outs:
     - path: model_versions
       hash: md5
-      md5: f8760853a699e53ccfc30ae885bf4ad4.dir
-      size: 16309897
+      md5: 064a46a05707cbd408a61f12201f0857.dir
+      size: 16320540
       nfiles: 4
   evaluate:
     cmd: python evaluate.py model_versions data/prepared evaluation_outputs

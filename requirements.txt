@@ -1,4 +1,4 @@
-dvc==3.53.2
+dvc
 torch
 torchvision
 transformers
@@ -8,6 +8,6 @@ scikit-learn
 numpy
 matplotlib
 seaborn
-pyyaml==6.0.2
-dvc[gs]==3.53.2
-wandb==0.19.0
+pyyaml
+dvc[gs]
+wandb

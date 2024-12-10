@@ -22,8 +22,9 @@ from sklearn.metrics import (
 from sklearn.preprocessing import label_binarize
 from transformers import EfficientNetImageProcessor, EfficientNetForImageClassification
 from torch.utils.data import DataLoader
-from utils import SportsDataset, log_class_metrics_to_wandb, log_artifact_to_wandb
+from utils import SportsDataset, log_class_metrics_to_wandb, log_artifact_to_wandb, update_best_accuracy, update_wandb_tags
 import wandb
+import json
 
 # Charger les paramètres depuis params.yaml
 with open("params.yaml", "r") as f:
@@ -149,6 +150,28 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
     cohen_kappa = cohen_kappa_score(all_labels, all_predictions)
     mcc = matthews_corrcoef(all_labels, all_predictions)
 
+    # Vérifier si le modèle actuel est le meilleur
+    is_best_model = update_best_accuracy(accuracy)
+
+    # Rejoindre le run existant
+    wandb.init(
+        project="sports-classification",
+        id=run_id,
+        resume="allow"
+    )
+
+    if wandb.run.id:
+        print(f"Run ID W&B actif : {wandb.run.id}")
+    else:
+        print("Erreur : aucun ID de run actif.")
+
+    # Mise à jour des tags dans W&B
+    update_wandb_tags(
+        project_name="sports-classification",
+        current_run_id=wandb.run.id,
+        is_best_model=is_best_model
+    )
+
     # Rapport de classification
     classif_report = classification_report(
         all_labels,
@@ -172,7 +195,6 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
     with open(os.path.join(output_dir, 'metrics.json'), 'w') as f:
         json.dump(metrics, f, indent=4)
     print(f"Métriques sauvegardées dans {os.path.join(output_dir, 'metrics.json')}")
-
 
     # Matrice de confusion
     cm = confusion_matrix(all_labels, all_predictions)
@@ -200,12 +222,11 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
     # Courbes Precision-Recall
     plot_precision_recall_curves(all_labels, all_predictions, test_dataset.classes, output_dir)
 
-    # Rejoindre le run existant
-    wandb.init(
-        project="sports-classification",
-        id=run_id,
-        resume="allow"
-    )
+    # Ajouter les tags W&B
+    wandb_tags = ["last_evaluation"]
+    if is_best_model:
+        wandb_tags.append("best_model")
+    wandb.run.tags += tuple(wandb_tags)
 
     # Loguer l'image de la matrice de confusion dans W&B
     wandb.log({"Confusion Matrix Heatmap": wandb.Image(confusion_matrix_path)})

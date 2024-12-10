@@ -10,6 +10,7 @@ from sklearn.metrics import precision_recall_curve, roc_curve, auc
 import matplotlib.pyplot as plt
 from collections import Counter
 from sklearn.preprocessing import label_binarize
+import json
 
 
 
@@ -124,7 +125,7 @@ def log_class_summary_to_wandb(train_dir, test_dir, num_images_to_log=5):
     Ajoute également deux graphiques pour la répartition des classes.
     """
     # Créer le tableau principal
-    table = wandb.Table(columns=["Class Name", "Example Images", "Train Count", "Test Count"])
+    table_sum = wandb.Table(columns=["Class Name", "Example Images", "Train Count", "Test Count"])
 
     # Données pour les graphiques
     train_table = wandb.Table(columns=["Class Name", "Train Count"])
@@ -144,8 +145,9 @@ def log_class_summary_to_wandb(train_dir, test_dir, num_images_to_log=5):
 
         example_images = [wandb.Image(img) for img in train_images[:num_images_to_log]]
 
+
         # Ajouter les informations dans le tableau principal
-        table.add_data(
+        table_sum.add_data(
             cls_name,
             example_images,
             len(train_images),
@@ -157,7 +159,7 @@ def log_class_summary_to_wandb(train_dir, test_dir, num_images_to_log=5):
         test_table.add_data(cls_name, len(test_images))
 
     # Logger le tableau principal dans W&B
-    wandb.log({"Class Summary": table})
+    wandb.log({"Class Summary": table_sum})
     print("Résumé des classes loggé dans W&B.")
 
     # Logger le graphique pour la répartition dans train
@@ -259,4 +261,99 @@ def log_class_metrics_to_wandb(classif_report, classes):
                 table, "Class", metric.capitalize(), title=f"{metric.capitalize()} per Class"
             )
         })
+
+def update_best_accuracy(current_accuracy, metrics_file="best_metrics.json"):
+    """
+    Met à jour la meilleure précision dans un fichier JSON.
+    """
+    try:
+        # Convertir en float pour éviter des erreurs de type
+        current_accuracy = float(current_accuracy)
+    except ValueError:
+        print("Erreur : current_accuracy n'est pas un float valide.")
+        return False
+
+    best_accuracy = 0  # Valeur par défaut si le fichier est vide ou n'existe pas
+
+    # Vérifier si le fichier existe et charger son contenu
+    if os.path.exists(metrics_file) and os.path.getsize(metrics_file) > 0:
+        with open(metrics_file, "r") as f:
+            try:
+                best_metrics = json.load(f)
+                best_accuracy = float(best_metrics.get("best_accuracy", 0))
+                print(f"Meilleure précision précédente : {best_accuracy}")
+            except (ValueError, json.JSONDecodeError):
+                print(f"Fichier {metrics_file} corrompu. Réinitialisation.")
+                best_accuracy = 0
+
+    # Comparer et mettre à jour si nécessaire
+    if current_accuracy > best_accuracy:
+        print(f"Nouvelle meilleure précision trouvée : {current_accuracy}")
+        with open(metrics_file, "w") as f:
+            json.dump({"best_accuracy": current_accuracy}, f, indent=4)
+        return True
+
+    return False
+
+def update_wandb_tags(project_name, current_run_id, is_best_model):
+    """
+    Met à jour les tags dans W&B :
+    - Supprime `best_model` de l'ancien run.
+    - Ajoute `last_evaluation` et éventuellement `best_model` au run actuel.
+    - Met à jour dynamiquement le groupe `tracked_models` en fonction des tags.
+
+    """
+    try:
+        api = wandb.Api()
+        runs = api.runs(project_name)
+
+        # Nom du groupe dynamique
+        group_name = "tracked_models"
+
+        for run in runs:
+            if run.id == current_run_id:
+                continue  # Ignorer le run actuel
+
+            # Retirer le tag `last_evaluation` des autres runs
+            if "last_evaluation" in run.tags:
+                run.tags.remove("last_evaluation")
+                run.update()
+
+            # Retirer `best_model` si applicable
+            if "best_model" in run.tags and is_best_model:
+                run.tags.remove("best_model")
+                run.update()
+
+            # Retirer du groupe si aucun des tags `best_model` ou `last_evaluation` n'est présent
+            if "best_model" not in run.tags and "last_evaluation" not in run.tags and run.group == group_name:
+                run.group = None
+                run.update()
+                print(f"Retiré du groupe {group_name} : Run ID {run.id}")
+
+        # Mettre à jour le run actuel
+        current_run = api.run(f"{project_name}/{current_run_id}")
+        if not current_run:
+            raise Exception(f"Impossible de trouver le run avec l'ID : {current_run_id}")
+
+        # Ajouter les nouveaux tags
+        tags = ["last_evaluation"]
+        if is_best_model:
+            tags.append("best_model")
+
+        current_run.tags = list(set(current_run.tags + tags))
+        current_run.update()
+        print(f"Tags mis à jour pour le run {current_run_id} : {tags}")
+
+        # Ajouter au groupe dynamique si nécessaire
+        if "best_model" in current_run.tags or "last_evaluation" in current_run.tags:
+            current_run.group = group_name
+            current_run.update()
+            print(f"Ajouté au groupe {group_name} : Run ID {current_run_id}")
+
+        print(f"Tags mis à jour pour le run {current_run_id} : {tags}")
+
+    except Exception as e:
+        print(f"Erreur lors de la mise à jour des tags W&B : {str(e)}")
+
+
 

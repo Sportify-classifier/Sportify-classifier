@@ -57,6 +57,7 @@ def train_model(data_dir, model_output_dir):
         val_dataloader = DataLoader(val_subset, batch_size=params['train']['batch_size'], shuffle=False)
 
         # Initialiser le modèle
+
         model = EfficientNetForImageClassification.from_pretrained(
             model_name,
             num_labels=len(dataset.classes),

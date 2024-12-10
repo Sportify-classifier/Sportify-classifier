@@ -22,6 +22,7 @@ if __name__ == "__main__":
     # Initialiser W&B
     run = wandb.init(
         project="sports-classification",
+        resume="never",
         config={
             "learning_rate": params['train']['lr'],
             "batch_size": params['train']['batch_size'],
