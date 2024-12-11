@@ -52,22 +52,29 @@ jobs:
           echo "JOB_ID=$JOB_ID" >> $GITHUB_ENV
 
       # Attendre la fin du job Vertex AI
+      # Attendre la fin du job Vertex AI
       - name: Wait for job to finish
         run: |
           echo "Waiting for Vertex AI Job to finish..."
           STATUS=$(gcloud ai custom-jobs describe "${JOB_ID}" --region=us-central1 --format='value(state)')
-          while [ "$STATUS" != "SUCCEEDED" ] && [ "$STATUS" != "FAILED" ]; do
+          MAX_RETRIES=60 
+          COUNT=0
+          while [ "$STATUS" != "JOB_STATE_SUCCEEDED" ] && [ "$STATUS" != "JOB_STATE_FAILED" ] && [ $COUNT -lt $MAX_RETRIES ]; do
             echo "Job status: $STATUS"
             echo "Fetching logs for Job ID: ${JOB_ID}..."
             gcloud logging read "resource.type=ml_job AND resource.labels.job_id=\"${JOB_ID}\"" --limit=50 --format="value(textPayload)"
             sleep 30
             STATUS=$(gcloud ai custom-jobs describe "${JOB_ID}" --region=us-central1 --format='value(state)')
+            COUNT=$((COUNT + 1))
           done
 
           echo "Final job status: $STATUS"
-          if [ "$STATUS" = "FAILED" ]; then
+          if [ "$STATUS" = "JOB_STATE_FAILED" ]; then
             echo "Fetching detailed logs for failure..."
             gcloud logging read "resource.type=ml_job AND resource.labels.job_id=\"${JOB_ID}\"" --limit=100 --format="value(textPayload)"
+            exit 1
+          elif [ $COUNT -ge $MAX_RETRIES ]; then
+            echo "Job did not finish within the expected time."
             exit 1
           fi
         env:
