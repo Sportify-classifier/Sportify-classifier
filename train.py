@@ -23,9 +23,15 @@ def train_model(data_dir, model_output_dir):
     all_losses_train = []
     all_losses_val = []
 
-    # Lire l'identifiant du run depuis le fichier
-    with open("wandb_run_id.txt", "r") as f:
-        run_id = f.read().strip()
+    # Lire l'identifiant du run depuis le fichier ou le créer s'il n'existe pas
+    run_id_file = "wandb_run_id.txt"
+    if os.path.exists(run_id_file):
+        with open(run_id_file, "r") as f:
+            run_id = f.read().strip()
+    else:
+        run_id = wandb.util.generate_id()
+        with open(run_id_file, "w") as f:
+            f.write(run_id)
 
     # Rejoindre le run existant
     wandb.init(
