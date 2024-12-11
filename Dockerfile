@@ -21,7 +21,7 @@ WORKDIR /app
 
 # Cloner le dépôt GitHub en utilisant le Personal Access Token
 COPY . .
-COPY .git .git
+COPY .git /.git
 COPY .dvc ./.dvc
 # RUN git clone https://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@github.com/Sportify-classifier/Sportify-classifier.git /app
 
