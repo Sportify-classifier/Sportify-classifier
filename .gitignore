@@ -179,3 +179,5 @@ cython_debug/
 /model_versions
 /evaluation_versions
 /wandb_run_id.txt
+
+evaluation_outputs/

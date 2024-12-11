@@ -24,8 +24,6 @@ RUN git clone https://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@github.com/Sporti
 
 # Installer les dépendances Python
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install dvc[gcs]
-
 
 # Définir la variable d'environnement pour Google Cloud
 ENV GOOGLE_APPLICATION_CREDENTIALS="/app/service-account-key.json"
@@ -36,6 +34,7 @@ RUN gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENT
 # Vérifier l'accès à GCS
 RUN gsutil ls gs://sportify_classifier || echo "GCS access failed, ensure credentials and permissions are correct"
 
+# Log to Weights & Biases
 RUN wandb login bc8308d7e10725fb223ccc2077268a501b60b19d
 
 # Définir le comportement par défaut
