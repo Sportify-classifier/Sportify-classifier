@@ -84,8 +84,8 @@ jobs:
       - name: Pull new model and metrics from GCS
         run: |
           echo "Pulling model and metrics from GCS..."
-          gsutil cp -r gs://sportify_classifier/training-outputs/model_versions .
-          gsutil cp -r gs://sportify_classifier/training-outputs/evaluation_outputs .
+          gsutil cp -r gs://sportify_classifier/dvc-storage .
+      # gsutil cp -r gs://sportify_classifier/training-outputs/evaluation_outputs .
 
       # Mettre à jour DVC avec le nouveau modèle et métriques
       - name: DVC add and push
