@@ -81,19 +81,19 @@ jobs:
           JOB_ID: ${{ env.JOB_ID }}
 
       # Récupérer le modèle et les métriques depuis GCS
-      - name: Pull new model and metrics from GCS
-        run: |
-          echo "Pulling model and metrics from GCS..."
-          gsutil cp -r gs://sportify_classifier/dvc-storage .
-      # gsutil cp -r gs://sportify_classifier/training-outputs/evaluation_outputs .
-
-      # Mettre à jour DVC avec le nouveau modèle et métriques
-      - name: DVC add and push
-        run: |
-          echo "Updating DVC with new model and metrics..."
-          dvc add model_versions
-          dvc add evaluation_outputs/metrics.json
-          git add model_versions.dvc evaluation_outputs/metrics.json.dvc
-          git commit -m "Add new model and metrics"
-          dvc push
-          git push
+#      - name: Pull new model and metrics from GCS
+#        run: |
+#          echo "Pulling model and metrics from GCS..."
+#          gsutil cp -r gs://sportify_classifier/dvc-storage .
+#      # gsutil cp -r gs://sportify_classifier/training-outputs/evaluation_outputs .
+#
+#      # Mettre à jour DVC avec le nouveau modèle et métriques
+#      - name: DVC add and push
+#        run: |
+#          echo "Updating DVC with new model and metrics..."
+#          dvc add model_versions
+#          dvc add evaluation_outputs/metrics.json
+#          git add model_versions.dvc evaluation_outputs/metrics.json.dvc
+#          git commit -m "Add new model and metrics"
+#          dvc push
+#          git push
