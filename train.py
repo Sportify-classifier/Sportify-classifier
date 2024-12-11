@@ -149,21 +149,8 @@ def train_model(data_dir, model_output_dir):
     print(f"Modèle sauvegardé dans {model_output_dir}")
 
     # Ajouter et pousser le modèle avec DVC
-    try:
-        # Ajouter le modèle au suivi DVC
-        subprocess.run(["dvc", "add", model_output_dir], check=True)
-
-        # Commit des changements Git et DVC
-        subprocess.run(["git", "add", f"{model_output_dir}.dvc", ".gitignore"], check=True)
-        subprocess.run(["git", "commit", "-m", f"Ajout du modèle versionné: {model_output_dir}"], check=True)
-
-        # Pousser les données DVC vers le remote 'myremote'
-        subprocess.run(["dvc", "push", "-r", "model_remote"], check=True)
-
-        print("Modèle ajouté et poussé vers le remote DVC 'myremote'.")
-    except subprocess.CalledProcessError as e:
-        print(f"Erreur lors de l'intégration DVC : {e}")
-        sys.exit(1)
+    subprocess.run(["dvc", "add", model_output_dir])
+    subprocess.run(["dvc", "push", "-r", "model_remote"])
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
