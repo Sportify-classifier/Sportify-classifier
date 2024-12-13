@@ -12,7 +12,7 @@ train:
   epochs: 2
   batch_size: 16
   num_classes: 10
-  num_folds: 2
+  num_folds: 1
 
 model:
   name: google/efficientnet-b0
