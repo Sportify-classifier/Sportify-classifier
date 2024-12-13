@@ -24,7 +24,7 @@ jobs:
       - name: Activate Service Account
         run: |
           echo "${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}" > service-account-key2.json
-          gcloud auth activate-service-account --key-file="service-account-key2.json"
+          gcloud auth activate-service-account --key-file="service-account-key.json"
       - name: List files
         run: ls -la
 
