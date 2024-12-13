@@ -12,10 +12,15 @@ from transformers import EfficientNetImageProcessor, EfficientNetForImageClassif
 from torch.utils.data import DataLoader, Subset
 from utils import SportsDataset, create_versioned_dir, calculate_accuracy, log_metrics_to_wandb
 import wandb
+import bentoml
+from PIL.Image import Image
+import torch.nn.functional as F
 
-# Charger les paramètres depuis params.yaml
+
+# Load parameters from params.yaml
 with open("params.yaml", "r") as f:
     params = yaml.safe_load(f)
+
 
 def train_model(data_dir, model_output_dir):
     model_name = params['model']['name']
@@ -23,7 +28,7 @@ def train_model(data_dir, model_output_dir):
     all_losses_train = []
     all_losses_val = []
 
-    # Lire l'identifiant du run depuis le fichier ou le créer s'il n'existe pas
+    # Read or generate W&B run ID
     run_id_file = "wandb_run_id.txt"
     if os.path.exists(run_id_file):
         with open(run_id_file, "r") as f:
@@ -33,42 +38,40 @@ def train_model(data_dir, model_output_dir):
         with open(run_id_file, "w") as f:
             f.write(run_id)
 
-    # Rejoindre le run existant
+    # Join or resume W&B run
     wandb.init(
         project="sports-classification",
         id=run_id,
         resume="allow"
     )
 
-
-    # Initialiser le feature extractor
+    # Initialize feature extractor
     feature_extractor = EfficientNetImageProcessor.from_pretrained(
         model_name,
         size=params['prepare']['image_size']
     )
 
-    # Charger le dataset
+    # Load dataset
     dataset = SportsDataset(data_dir=data_dir, feature_extractor=feature_extractor)
     dataset_size = len(dataset)
     fold_size = dataset_size // num_folds
     indices = np.arange(dataset_size)
 
     for fold in range(1, num_folds + 1):
-        print(f"Entraînement pour le fold {fold}/{num_folds}")
+        print(f"Training fold {fold}/{num_folds}")
 
-        # Diviser les indices pour le train et la validation
+        # Split indices for train and validation
         val_indices = indices[(fold - 1) * fold_size:fold * fold_size]
         train_indices = np.setdiff1d(indices, val_indices)
 
         train_subset = Subset(dataset, train_indices)
         val_subset = Subset(dataset, val_indices)
 
-        # Créer les DataLoaders
+        # Create DataLoaders
         train_dataloader = DataLoader(train_subset, batch_size=params['train']['batch_size'], shuffle=True)
         val_dataloader = DataLoader(val_subset, batch_size=params['train']['batch_size'], shuffle=False)
 
-        # Initialiser le modèle
-
+        # Initialize model
         model = EfficientNetForImageClassification.from_pretrained(
             model_name,
             num_labels=len(dataset.classes),
@@ -77,12 +80,12 @@ def train_model(data_dir, model_output_dir):
         optimizer = Adam(model.parameters(), lr=params['train']['lr'])
         model.train()
 
-        # Initialiser les listes pour les pertes par époque dans un fold
+        # Initialize epoch loss lists for this fold
         losses_train = []
         losses_val = []
 
         for epoch in range(params['train']['epochs']):
-            # Boucle d'entraînement
+            # Training loop
             model.train()
             epoch_loss_train = 0
             epoch_accuracy_train = 0
@@ -100,11 +103,11 @@ def train_model(data_dir, model_output_dir):
                 epoch_loss_train += loss.item()
                 epoch_accuracy_train += calculate_accuracy(outputs.logits, labels)
 
-            # Moyenne des métriques pour cette epoch
+            # Average metrics for this epoch
             train_loss = epoch_loss_train / len(train_dataloader)
             train_accuracy = epoch_accuracy_train / len(train_dataloader)
 
-            # Boucle de validation
+            # Validation loop
             model.eval()
             epoch_loss_val = 0
             epoch_accuracy_val = 0
@@ -118,49 +121,83 @@ def train_model(data_dir, model_output_dir):
                     epoch_loss_val += loss.item()
                     epoch_accuracy_val += calculate_accuracy(outputs.logits, labels)
 
-            # Moyenne des métriques pour cette epoch
+            # Average metrics for this epoch
             val_loss = epoch_loss_val / len(val_dataloader)
             val_accuracy = epoch_accuracy_val / len(val_dataloader)
 
-            # Ajouter les pertes pour cette epoch aux listes locales
+            # Append losses to fold lists
             losses_train.append(train_loss)
             losses_val.append(val_loss)
 
-            # Logger les métriques dans W&B
+            # Log metrics to W&B
             log_metrics_to_wandb(epoch, train_loss, val_loss, train_accuracy, val_accuracy)
 
-        # Ajouter les pertes pour ce fold aux listes globales
+        # Append fold losses to global lists
         all_losses_train.append(losses_train)
         all_losses_val.append(losses_val)
 
-    # Calculer la moyenne des pertes d'entraînement et de validation sur tous les folds
-    mean_losses_train = np.mean(all_losses_train, axis=0)  # Moyenne des pertes d'entraînement
-    mean_losses_val = np.mean(all_losses_val, axis=0)      # Moyenne des pertes de validation
+    # Calculate mean training and validation losses across folds
+    mean_losses_train = np.mean(all_losses_train, axis=0)
+    mean_losses_val = np.mean(all_losses_val, axis=0)
 
-    # Plot les pertes
+    # Plot losses
     epochs = range(1, params['train']['epochs'] + 1)
-    plt.plot(epochs, mean_losses_train, label="Perte entraînement")
-    plt.plot(epochs, mean_losses_val, label="Perte validation")
-    plt.xlabel("Époques")
-    plt.ylabel("Perte")
-    plt.title("Perte moyenne par époque")
+    plt.plot(epochs, mean_losses_train, label="Training Loss")
+    plt.plot(epochs, mean_losses_val, label="Validation Loss")
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+    plt.title("Average Loss per Epoch")
     plt.legend()
 
-    # Enregistrer le graphique
+    # Save loss plot
     loss_plot_path = os.path.join(model_output_dir, 'loss_curve.png')
-
     os.makedirs(model_output_dir, exist_ok=True)
     plt.savefig(loss_plot_path)
     plt.close()
 
-    # Sauvegarder le modèle
+    # Save model locally and with BentoML
     model.save_pretrained(model_output_dir)
     feature_extractor.save_pretrained(model_output_dir)
-    print(f"Modèle sauvegardé dans {model_output_dir}")
 
-    # Ajouter et pousser le modèle avec DVC
-    subprocess.run(["dvc", "add", model_output_dir])
-    subprocess.run(["dvc", "push", "-r", "model_remote"])
+    # Convertir les classes en python list
+    labels_list = list(dataset.classes)
+
+    def preprocess(pil_img: Image):
+        pil_img = pil_img.convert('RGB')
+        pil_img = pil_img.resize((224, 224))
+        x = np.array(pil_img).astype(np.float32) / 255.0
+        x = np.transpose(x, (2, 0, 1))  # [3,224,224]
+        x = np.expand_dims(x, axis=0)  # [1,3,224,224]
+        return torch.from_numpy(x)
+
+    def postprocess(model_output):
+        # model_output est un "ImageClassifierOutputWithNoAttention"
+        logits_tensor = model_output.logits
+        probabilities = F.softmax(logits_tensor, dim=1).detach().cpu().numpy().squeeze()
+        predicted_class_idx = np.argmax(probabilities)
+        return {
+            "prediction": labels_list[predicted_class_idx],
+            "probabilities": {
+                labels_list[i]: float(prob) for i, prob in enumerate(probabilities)
+            }
+        }
+    bentoml.pytorch.save_model(
+        name="sports_classifier_model",
+        model=model,
+        custom_objects={
+            "preprocess": preprocess,
+            "postprocess": postprocess,
+            "labels_list": labels_list,
+        },
+    )
+
+    bentoml.models.export_model(
+        "sports_classifier_model:latest",
+        os.path.join(model_output_dir, "sports_classifier_model.bentomodel"),
+    )
+
+    print("Model saved to BentoML store and exported!")
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -170,7 +207,7 @@ if __name__ == "__main__":
     data_prepared_dir = sys.argv[1]
     model_output_base_dir = sys.argv[2]
 
-    # Fixer les graines pour la reproductibilité
+    # Set random seeds for reproducibility
     random_seed = params['train'].get("seed", 42)
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
@@ -178,8 +215,8 @@ if __name__ == "__main__":
 
     data_dir = os.path.join(data_prepared_dir, 'train')
 
-    # Créer un dossier versionné pour le modèle
+    # Create a versioned directory for the model
     model_output_dir = create_versioned_dir(model_output_base_dir, "model")
 
-    # Appeler la fonction d'entraînement
+    # Train the model
     train_model(data_dir=data_dir, model_output_dir=model_output_dir)

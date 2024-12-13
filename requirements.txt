@@ -1,3 +1,4 @@
+bentoml
 dvc
 torch
 torchvision
