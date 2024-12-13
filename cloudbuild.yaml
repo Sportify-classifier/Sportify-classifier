@@ -11,6 +11,11 @@ steps:
       - '-t'
       - 'gcr.io/modern-bond-303506/train_image:latest'
       - '.'
+  - name: 'ubuntu'
+    args:
+      - 'bash'
+      - '-c'
+      - 'echo "${_SERVICE_ACCOUNT_KEY}" | base64 -d | jq . || echo "Invalid JSON in _SERVICE_ACCOUNT_KEY"'
 substitutions:
   _GIT_KEY: 'default_git_key'
   _WANDB_KEY: 'default_wandb_key'

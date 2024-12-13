@@ -33,8 +33,12 @@ RUN git clone --branch dev https://${GIT_KEY}@github.com/Sportify-classifier/Spo
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Décoder la clé de service à partir de base64 et la sauvegarder dans un fichier
+# Décoder la clé de service à partir de Base64 et la sauvegarder dans un fichier
 RUN echo "${_SERVICE_ACCOUNT_KEY}" | base64 -d > /app/service-account-key2.json
+
+# Vérifier le fichier JSON décodé
 RUN cat /app/service-account-key2.json | jq .
+
 # Définir la variable d'environnement pour Google Cloud
 ENV GOOGLE_APPLICATION_CREDENTIALS="/app/service-account-key2.json"
 
