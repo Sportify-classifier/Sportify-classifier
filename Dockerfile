@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     gnupg \
+    jq \
     && rm -rf /var/lib/apt/lists/*
 
 # Ajouter la clé GPG de Google Cloud

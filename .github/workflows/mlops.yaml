@@ -29,6 +29,10 @@ jobs:
         run: |
           echo "Testing GCS access..."
           gsutil ls gs://sportify_classifier || echo "Bucket access failed, ensure credentials and permissions are correct"
+      
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
 
       # Construire l'image Docker et la pousser sur GCR
       - name: Build and push Docker image
