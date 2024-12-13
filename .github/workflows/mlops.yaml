@@ -34,9 +34,13 @@ jobs:
       - name: Build and push Docker image
         run: |
           echo "Building Docker image and pushing to GCR..."
-          gcloud builds submit --tag gcr.io/modern-bond-303506/train_image:latest
+          export SERVICE_ACCOUNT_KEY_BASE64=$(cat service-account-key.json | base64 -w 0)
+          gcloud builds submit . \
+          --config=cloudbuild.yaml \
+          --substitutions=_GIT_KEY=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,_WANDB_KEY=bc8308d7e10725fb223ccc2077268a501b60b19d,_SERVICE_ACCOUNT_KEY=${SERVICE_ACCOUNT_KEY_BASE64} \
+          --tag=gcr.io/modern-bond-303506/train_image:latest
 
-
+      # gcloud builds submit . --config=cloudbuild.yaml --substitutions=_GIT_KEY=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,_WANDB_KEY=bc8308d7e10725fb223ccc2077268a501b60b19d
       # Lancer le job Vertex AI
       - name: Launch Vertex AI job
         id: launch_job

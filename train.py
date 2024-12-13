@@ -154,10 +154,6 @@ def train_model(data_dir, model_output_dir):
     feature_extractor.save_pretrained(model_output_dir)
     print(f"Modèle sauvegardé dans {model_output_dir}")
 
-    # Ajouter et pousser le modèle avec DVC
-    subprocess.run(["dvc", "add", model_output_dir])
-    subprocess.run(["dvc", "push", "-r", "model_remote"])
-
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("Usage: python train.py <data_prepared_dir> <model_output_base_dir>")
