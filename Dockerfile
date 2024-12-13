@@ -28,6 +28,7 @@ RUN apt-get update && apt-get install -y google-cloud-sdk && rm -rf /var/lib/apt
 WORKDIR /app
 
 # Cloner le dépôt GitHub en utilisant le Personal Access Token
+RUN echo "GIT_KEY is: ${GIT_KEY}"
 RUN git clone --branch dev https://${GIT_KEY}@github.com/Sportify-classifier/Sportify-classifier.git /app
 
 # Installer les dépendances Python
