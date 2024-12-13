@@ -5,13 +5,13 @@ stages:
     deps:
     - path: data/all_data
       hash: md5
-      md5: d9136130f3edf731ea7d5bf558c20bd7.dir
-      size: 375986530
-      nfiles: 14493
+      md5: cec9c03ade7ae449c4cfcd28bee30ecc.dir
+      size: 375855134
+      nfiles: 14492
     - path: data_loader.py
       hash: md5
-      md5: 3df803cbda8ed12e142fcc26f7ebf8ed
-      size: 1945
+      md5: 7359a3ad6f9aec8810785df93127c625
+      size: 2001
     params:
       params.yaml:
         data:
@@ -19,7 +19,7 @@ stages:
         prepare:
           seed: 42
           split: 0.3
-          sample_fraction: 0.2
+          sample_fraction: 0.3
           excluded_classes:
           - sky surfing
           max_images_per_class: 107
@@ -33,9 +33,9 @@ stages:
     outs:
     - path: data/prepared
       hash: md5
-      md5: a32ea21d93c7993083cd41209c15a860.dir
-      size: 5196835
-      nfiles: 210
+      md5: 06bbe7ffc463aeb15c6d55e802098e5f.dir
+      size: 7737419
+      nfiles: 320
   train:
     cmd: python train.py data/prepared model_versions
     deps:

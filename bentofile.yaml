@@ -1,0 +1,11 @@
+service: "serve:svc"
+include:
+  - serve.py
+python:
+  packages:
+    - "bentoml==1.3.16"
+    - "pillow==11.0.0"
+    - "torch==2.5.1"
+    - "transformers==4.47.0"
+docker:
+  python_version: "3.12"

@@ -9,6 +9,7 @@ data/valid/
 
 ## Python
 .venv/
+.venv2/
 
 #Service-key
 /service-account-key.json
