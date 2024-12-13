@@ -7,7 +7,7 @@ steps:
       - '--build-arg'
       - '_WANDB_KEY=${_WANDB_KEY}'
       - '--build-arg'
-      - '_WANDB_KEY=${_SERVICE_ACCOUNT_KEY}'
+      - '_SERVICE_ACCOUNT_KEY=${_SERVICE_ACCOUNT_KEY}'
       - '-t'
       - 'gcr.io/modern-bond-303506/train_image:latest'
       - '.'
