@@ -23,7 +23,7 @@ stages:
       - model_versions
 
   evaluate:
-    cmd: python evaluate.py model_versions data/prepared evaluation_outputs
+    cmd: python evaluate.py model_versions data/prepared evaluation_outputs gs://sportify_classifier/evaluation_output
     deps:
       - data/prepared
       - evaluate.py

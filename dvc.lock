@@ -29,7 +29,7 @@ stages:
           epochs: 2
           batch_size: 16
           num_classes: 10
-          num_folds: 2
+          num_folds: 3
     outs:
     - path: data/prepared
       hash: md5
@@ -58,15 +58,15 @@ stages:
           epochs: 2
           batch_size: 16
           num_classes: 10
-          num_folds: 2
+          num_folds: 3
     outs:
     - path: model_versions
       hash: md5
-      md5: a16a32bdc9293adbc7d5f103a2d1f043.dir
-      size: 16322443
+      md5: dc8856650b4576ad3f7f61bd31399c4e.dir
+      size: 16322252
       nfiles: 4
   evaluate:
-    cmd: python evaluate.py model_versions data/prepared evaluation_outputs
+    cmd: python evaluate.py model_versions data/prepared evaluation_outputs gs://sportify_classifier/evaluation_output
     deps:
     - path: data/prepared
       hash: md5
@@ -75,31 +75,31 @@ stages:
       nfiles: 210
     - path: evaluate.py
       hash: md5
-      md5: c92a432e42d4f5e046de0f474e1a7cd7
-      size: 10940
+      md5: 55158106499067a98fff762345382520
+      size: 11214
     - path: model_versions
       hash: md5
-      md5: a16a32bdc9293adbc7d5f103a2d1f043.dir
-      size: 16322443
+      md5: dc8856650b4576ad3f7f61bd31399c4e.dir
+      size: 16322252
       nfiles: 4
     outs:
     - path: evaluation_outputs/confusion_matrix.png
       hash: md5
-      md5: 9e7c04af1ade807e51354e253b5d14fb
-      size: 48587
+      md5: d868d45a6db18c2a5366dbc1d7094c95
+      size: 48847
     - path: evaluation_outputs/loss_curve.png
       hash: md5
-      md5: b96293951b3bc48d90fe4d544816a8e7
-      size: 24098
+      md5: 9278b48b89c95ddef7698e86dc776656
+      size: 23907
     - path: evaluation_outputs/metrics.json
       hash: md5
-      md5: 268c838394235a6ea54a0762a4405414
-      size: 2323
+      md5: 2d546e2b95356ba11a93fc42acf8d992
+      size: 2407
     - path: evaluation_outputs/normalized_confusion_matrix.png
       hash: md5
-      md5: 159473230f8d386afb7159d373e22d75
-      size: 64470
+      md5: 0724c3c1b86caa5c2147a402109e0861
+      size: 64701
     - path: evaluation_outputs/precision_recall_curves.png
       hash: md5
-      md5: fed531fd9b15586fb8ab84e3688d2cd4
-      size: 45983
+      md5: 36d7cea23ae4c53e353f48e9b8f9f89b
+      size: 47796

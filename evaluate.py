@@ -109,7 +109,7 @@ def generate_html_report(metrics, output_dir):
         f.write(html_content)
     print(f"Rapport HTML sauvegardé dans {os.path.join(output_dir, 'report.html')}")
 
-def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
+def evaluate_model(model_dir, data_dir, evaluation_versions_dir, output_dir_gcs=None):
     # Créer un dossier versionné pour les évaluations
     output_dir = create_versioned_dir(evaluation_versions_dir, 'model')
 
@@ -282,18 +282,23 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
             else:
                 print(f"Le fichier source et destination sont identiques pour {file_name}, pas de copie effectuée.")
 
+    if output_dir_gcs:
+        print(f"Copie des résultats d'évaluation dans GCS : {output_dir_gcs}")
+        os.system(f"gsutil -m cp -r {output_dir} {output_dir_gcs}")
+
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print("Usage: python evaluate.py <model_versions_dir> <data_prepared_dir> <evaluation_versions_dir>")
+    if len(sys.argv) != 5:
+        print("Usage: python evaluate.py <model_versions_dir> <data_prepared_dir> <evaluation_versions_dir> <output_dir_gcs>")
         sys.exit(1)
 
     model_versions_dir = sys.argv[1]
     data_prepared_dir = sys.argv[2]
     evaluation_versions_dir = sys.argv[3]
+    output_dir_gcs = sys.argv[4]
 
     # Obtenir le dernier dossier de modèle
     model_dir = get_latest_model_dir(model_versions_dir)
     data_dir = os.path.join(data_prepared_dir, 'test')
 
     # Appeler la fonction d'évaluation
-    evaluate_model(model_dir=model_dir, data_dir=data_dir, evaluation_versions_dir=evaluation_versions_dir)
+    evaluate_model(model_dir=model_dir, data_dir=data_dir, evaluation_versions_dir=evaluation_versions_dir, output_dir_gcs=output_dir_gcs)
