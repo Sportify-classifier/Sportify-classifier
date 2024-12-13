@@ -5,6 +5,10 @@ on:
     branches:
       - dev
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   train:
     runs-on: ubuntu-latest
@@ -101,4 +105,4 @@ jobs:
           body: |
             [Compare les modèles sur Weights & Biases](https://wandb.ai/sportify/sports-classification)
             Veuillez examiner les résultats et décider si ce modèle doit être fusionné dans la branche principale (`main`).
-          draft: false
+          # Ajoutez d'autres options si nécessaire
