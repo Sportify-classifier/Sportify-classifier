@@ -10,7 +10,7 @@ from sklearn.metrics import precision_recall_curve, roc_curve, auc
 import matplotlib.pyplot as plt
 from collections import Counter
 from sklearn.preprocessing import label_binarize
-import json
+import json, time
 
 
 
@@ -298,62 +298,50 @@ def update_best_accuracy(current_accuracy, metrics_file="best_metrics.json"):
 def update_wandb_tags(project_name, current_run_id, is_best_model):
     """
     Met à jour les tags dans W&B :
-    - Supprime `best_model` de l'ancien run.
-    - Ajoute `last_evaluation` et éventuellement `best_model` au run actuel.
-    - Met à jour dynamiquement le groupe `tracked_models` en fonction des tags.
-
+    - Supprime `best_model` et `last_evaluation` des anciens runs si nécessaire.
+    - Ajoute `last_evaluation` et/ou `best_model` au run actuel.
+    - Ajoute un tag `tracked_model` à tous les runs ayant `best_model` ou `last_evaluation`.
     """
     try:
         api = wandb.Api()
         runs = api.runs(project_name)
 
-        # Nom du groupe dynamique
-        group_name = "tracked_models"
-
         for run in runs:
-            if run.id == current_run_id:
-                continue  # Ignorer le run actuel
+            run_tags = set(run.tags)  # Utilisation de set pour éviter les doublons
 
-            # Retirer le tag `last_evaluation` des autres runs
-            if "last_evaluation" in run.tags:
-                run.tags.remove("last_evaluation")
+            # Si ce n'est pas le run actuel, retirer les anciens tags
+            if run.id != current_run_id:
+                if "last_evaluation" in run_tags:
+                    run_tags.remove("last_evaluation")
+                if "best_model" in run_tags and is_best_model:
+                    run_tags.remove("best_model")
+                
+                # Gérer le tag `tracked_model`
+                if "best_model" in run_tags or "last_evaluation" in run_tags:
+                    run_tags.add("tracked_model")
+                else:
+                    run_tags.discard("tracked_model")
+
+                # Appliquer les modifications
+                run.tags = list(run_tags)
                 run.update()
 
-            # Retirer `best_model` si applicable
-            if "best_model" in run.tags and is_best_model:
-                run.tags.remove("best_model")
-                run.update()
-
-            # Retirer du groupe si aucun des tags `best_model` ou `last_evaluation` n'est présent
-            if "best_model" not in run.tags and "last_evaluation" not in run.tags and run.group == group_name:
-                run.group = None
-                run.update()
-                print(f"Retiré du groupe {group_name} : Run ID {run.id}")
-
-        # Mettre à jour le run actuel
+        # Gérer les tags pour le run actuel
         current_run = api.run(f"{project_name}/{current_run_id}")
-        if not current_run:
-            raise Exception(f"Impossible de trouver le run avec l'ID : {current_run_id}")
-
-        # Ajouter les nouveaux tags
-        tags = ["last_evaluation"]
+        current_run_tags = set(current_run.tags)
+        current_run_tags.add("tracked_model")
+        current_run_tags.add("last_evaluation")
         if is_best_model:
-            tags.append("best_model")
+            current_run_tags.add("best_model")
 
-        current_run.tags = list(set(current_run.tags + tags))
+        # Appliquer les modifications au run actuel
+        current_run.tags = list(current_run_tags)
         current_run.update()
-        print(f"Tags mis à jour pour le run {current_run_id} : {tags}")
 
-        # Ajouter au groupe dynamique si nécessaire
-        if "best_model" in current_run.tags or "last_evaluation" in current_run.tags:
-            current_run.group = group_name
-            current_run.update()
-            print(f"Ajouté au groupe {group_name} : Run ID {current_run_id}")
-
-        print(f"Tags mis à jour pour le run {current_run_id} : {tags}")
+        print(f"Tags après mise à jour pour le Run ID {current_run_id}: {current_run.tags}")
 
     except Exception as e:
-        print(f"Erreur lors de la mise à jour des tags W&B : {str(e)}")
+        print(f"Erreur lors de la mise à jour des tags dans W&B : {str(e)}")
 
 
 

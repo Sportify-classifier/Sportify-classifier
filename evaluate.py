@@ -172,6 +172,7 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir, output_dir_gcs=
         is_best_model=is_best_model
     )
 
+
     # Rapport de classification
     classif_report = classification_report(
         all_labels,
@@ -227,6 +228,12 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir, output_dir_gcs=
     if is_best_model:
         wandb_tags.append("best_model")
     wandb.run.tags += tuple(wandb_tags)
+
+    # Assurer que tracked_model est inclus
+    wandb_tags.append("tracked_model")
+
+    # Éviter les doublons en utilisant set()
+    wandb.run.tags = list(set(list(wandb.run.tags) + wandb_tags))
 
     # Loguer l'image de la matrice de confusion dans W&B
     wandb.log({"Confusion Matrix Heatmap": wandb.Image(confusion_matrix_path)})

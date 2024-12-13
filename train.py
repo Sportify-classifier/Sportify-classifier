@@ -40,8 +40,12 @@ def train_model(data_dir, model_output_dir):
         resume="allow"
     )
 
+
     # Initialiser le feature extractor
-    feature_extractor = EfficientNetImageProcessor.from_pretrained(model_name)
+    feature_extractor = EfficientNetImageProcessor.from_pretrained(
+        model_name,
+        size=params['prepare']['image_size']
+    )
 
     # Charger le dataset
     dataset = SportsDataset(data_dir=data_dir, feature_extractor=feature_extractor)
