@@ -101,7 +101,7 @@ jobs:
           version: '0.20.0'
       - name: Create CML report
         env:
-          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO_TOKEN: ${{ secrets.SECRET }}
         run: |
           echo "# Evaluation Report" > report.md
           echo "## Metrics" >> report.md
@@ -121,7 +121,7 @@ jobs:
       - name: Create Pull Request to main
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.SECRET }}
           commit-message: "Automated results from dev branch"
           branch: dev
           base: main
