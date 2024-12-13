@@ -47,7 +47,6 @@ jobs:
           --display-name="entraînement-mlops" \
           --worker-pool-spec=machine-type=n1-standard-4,container-image-uri=gcr.io/modern-bond-303506/train_image:latest \
           --service-account=sportify-classier@modern-bond-303506.iam.gserviceaccount.com \
-          --args="--output-dir=gs://sportify_classifier/evaluation_output" \
           --format='value(name)')
           echo "Vertex AI Job ID: $JOB_ID"
           echo "JOB_ID=$JOB_ID" >> $GITHUB_ENV
@@ -89,34 +88,7 @@ jobs:
           gsutil -m cp -r "gs://sportify_classifier/evaluation_output/*" ./evaluation_output
           echo "Listing downloaded files..."
           ls -la ./evaluation_output
-
-      # Générer un rapport CML
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Setup CML
-        uses: iterative/setup-cml@v2
-        with:
-          version: '0.20.0'
-      - name: Create CML report
-        env:
-          REPO_TOKEN: ${{ secrets.SECRET }}
-        run: |
-          echo "# Evaluation Report" > report.md
-          echo "## Metrics" >> report.md
-          cat ./evaluation_output/metrics.json | jq . >> report.md
-
-          echo "## Plots" >> report.md
-          echo "### Loss Curve" >> report.md
-          echo '![](./evaluation_output/loss_curve.png)' >> report.md
-          echo "### Confusion Matrix" >> report.md
-          echo '![](./evaluation_output/confusion_matrix.png)' >> report.md
-          echo "### Normalized Confusion Matrix" >> report.md
-          echo '![](./evaluation_output/normalized_confusion_matrix.png)' >> report.md
-          echo "### Precision-Recall Curves" >> report.md
-          echo '![](./evaluation_output/precision_recall_curves.png)' >> report.md
-
+      
       # Créer une Pull Request pour fusionner `dev` dans `main`
       - name: Create Pull Request to main
         uses: peter-evans/create-pull-request@v5
@@ -125,12 +97,8 @@ jobs:
           commit-message: "Automated results from dev branch"
           branch: dev
           base: main
-          title: "Merge dev into main with evaluation results"
+          title: "Merge dev into main - Evaluation Results"
           body: |
-            This PR contains the latest evaluation results and plots:
-            - Metrics
-            - Loss Curve
-            - Confusion Matrix
-            - Precision-Recall Curves
-            Review the evaluation results in the attached report.
+            [Compare les modèles sur Weights & Biases](https://wandb.ai/sportify/sports-classification)
+            Veuillez examiner les résultats et décider si ce modèle doit être fusionné dans la branche principale (`main`). Les graphiques et résultats détaillés sont inclus dans cette PR.
           draft: false # Set to true if you want to create the PR as a draft
