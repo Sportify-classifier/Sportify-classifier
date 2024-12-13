@@ -24,18 +24,18 @@ jobs:
       - name: Configure gcloud
         run: gcloud config set project modern-bond-303506
 
-      # Vérifier et créer le bucket GCS si nécessaire
-      - name: Ensure GCS Bucket Exists
+      # Vérifier les permissions sur le bucket
+      - name: Check GCS Bucket Access
         run: |
-          echo "Checking if bucket exists..."
-          gsutil ls gs://sportify_classifier || gsutil mb -l us-central1 -b on gs://sportify_classifier
-          gsutil ls gs://sportify_classifier/evaluation_output || echo "evaluation_output directory will be created by Vertex AI"
+          echo "Testing GCS access..."
+          gsutil ls gs://sportify_classifier || echo "Bucket access failed, ensure credentials and permissions are correct"
 
       # Construire l'image Docker et la pousser sur GCR
       - name: Build and push Docker image
         run: |
           echo "Building Docker image and pushing to GCR..."
           gcloud builds submit --tag gcr.io/modern-bond-303506/train_image:latest
+
 
       # Lancer le job Vertex AI
       - name: Launch Vertex AI job
@@ -83,9 +83,54 @@ jobs:
       # Récupérer les résultats depuis GCS
       - name: Pull evaluation_output from GCS
         run: |
-          echo "Fetching evaluation_output..."
+          echo "Ensuring local evaluation_output directory exists..."
+          mkdir -p ./evaluation_output
+          echo "Fetching evaluation_output from GCS..."
           gsutil -m cp -r "gs://sportify_classifier/evaluation_output/*" ./evaluation_output
+          echo "Listing downloaded files..."
+          ls -la ./evaluation_output
 
-      # Vérifier les fichiers téléchargés
-      - name: List evaluation_output
-        run: ls -la ./evaluation_output
+      # Générer un rapport CML
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Setup CML
+        uses: iterative/setup-cml@v2
+        with:
+          version: '0.20.0'
+      - name: Create CML report
+        env:
+          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "# Evaluation Report" > report.md
+          echo "## Metrics" >> report.md
+          cat ./evaluation_output/metrics.json | jq . >> report.md
+
+          echo "## Plots" >> report.md
+          echo "### Loss Curve" >> report.md
+          echo '![](./evaluation_output/loss_curve.png)' >> report.md
+          echo "### Confusion Matrix" >> report.md
+          echo '![](./evaluation_output/confusion_matrix.png)' >> report.md
+          echo "### Normalized Confusion Matrix" >> report.md
+          echo '![](./evaluation_output/normalized_confusion_matrix.png)' >> report.md
+          echo "### Precision-Recall Curves" >> report.md
+          echo '![](./evaluation_output/precision_recall_curves.png)' >> report.md
+
+      # Créer une Pull Request pour fusionner `dev` dans `main`
+      - name: Create Pull Request to main
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Automated results from dev branch"
+          branch: dev
+          base: main
+          title: "Merge dev into main with evaluation results"
+          body: |
+            This PR contains the latest evaluation results and plots:
+            - Metrics
+            - Loss Curve
+            - Confusion Matrix
+            - Precision-Recall Curves
+            Review the evaluation results in the attached report.
+          draft: false # Set to true if you want to create the PR as a draft
