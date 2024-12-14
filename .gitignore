@@ -182,4 +182,4 @@ cython_debug/
 /wandb_run_id.txt
 
 evaluation_outputs/
-evaluation_output/
+evaluation_output/data/prepared
