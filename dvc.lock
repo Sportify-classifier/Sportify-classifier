@@ -5,13 +5,13 @@ stages:
     deps:
     - path: data/all_data
       hash: md5
-      md5: cec9c03ade7ae449c4cfcd28bee30ecc.dir
-      size: 375855134
-      nfiles: 14492
+      md5: d9136130f3edf731ea7d5bf558c20bd7.dir
+      size: 375986530
+      nfiles: 14493
     - path: data_loader.py
       hash: md5
-      md5: 7359a3ad6f9aec8810785df93127c625
-      size: 2001
+      md5: fd3de3a3906080266ac3fabc22dcabbb
+      size: 1950
     params:
       params.yaml:
         data:
@@ -19,6 +19,7 @@ stages:
         prepare:
           seed: 42
           split: 0.3
+          image_size: 224
           sample_fraction: 0.3
           excluded_classes:
           - sky surfing
@@ -33,21 +34,21 @@ stages:
     outs:
     - path: data/prepared
       hash: md5
-      md5: 06bbe7ffc463aeb15c6d55e802098e5f.dir
-      size: 7737419
+      md5: d2022cb200e31faeead626174ed9ecac.dir
+      size: 7933600
       nfiles: 320
   train:
     cmd: python train.py data/prepared model_versions
     deps:
     - path: data/prepared
       hash: md5
-      md5: a32ea21d93c7993083cd41209c15a860.dir
-      size: 5196835
-      nfiles: 210
+      md5: d2022cb200e31faeead626174ed9ecac.dir
+      size: 7933600
+      nfiles: 320
     - path: train.py
       hash: md5
-      md5: 2860d6483c9d175de837a3a2c4481bef
-      size: 6582
+      md5: 52320f89f1e6da7034a1b0e19ef68f0b
+      size: 7531
     params:
       params.yaml:
         model:
@@ -62,44 +63,44 @@ stages:
     outs:
     - path: model_versions
       hash: md5
-      md5: dc8856650b4576ad3f7f61bd31399c4e.dir
-      size: 16322252
-      nfiles: 4
+      md5: 29e02c1108894413c350c9f7a69d5e9e.dir
+      size: 31322862
+      nfiles: 5
   evaluate:
     cmd: python evaluate.py model_versions data/prepared evaluation_outputs gs://sportify_classifier/evaluation_output
     deps:
     - path: data/prepared
       hash: md5
-      md5: a32ea21d93c7993083cd41209c15a860.dir
-      size: 5196835
-      nfiles: 210
+      md5: d2022cb200e31faeead626174ed9ecac.dir
+      size: 7933600
+      nfiles: 320
     - path: evaluate.py
       hash: md5
-      md5: 55158106499067a98fff762345382520
-      size: 11214
+      md5: 0092b3c12cb0fa20fb329d688508ad1d
+      size: 11411
     - path: model_versions
       hash: md5
-      md5: dc8856650b4576ad3f7f61bd31399c4e.dir
-      size: 16322252
-      nfiles: 4
+      md5: 29e02c1108894413c350c9f7a69d5e9e.dir
+      size: 31322862
+      nfiles: 5
     outs:
     - path: evaluation_outputs/confusion_matrix.png
       hash: md5
-      md5: d868d45a6db18c2a5366dbc1d7094c95
-      size: 48847
+      md5: 16504fa1c0aefa0ca640bcbdf87174e3
+      size: 50407
     - path: evaluation_outputs/loss_curve.png
       hash: md5
-      md5: 9278b48b89c95ddef7698e86dc776656
-      size: 23907
+      md5: c25893658703b7baad9b474b9b1c39fd
+      size: 22865
     - path: evaluation_outputs/metrics.json
       hash: md5
-      md5: 2d546e2b95356ba11a93fc42acf8d992
-      size: 2407
+      md5: f1e2944aba4ca29a51e30a6d3db96bcf
+      size: 2253
     - path: evaluation_outputs/normalized_confusion_matrix.png
       hash: md5
-      md5: 0724c3c1b86caa5c2147a402109e0861
-      size: 64701
+      md5: 8e4788d986bf7bceefaeee51dce25f75
+      size: 69433
     - path: evaluation_outputs/precision_recall_curves.png
       hash: md5
-      md5: 36d7cea23ae4c53e353f48e9b8f9f89b
-      size: 47796
+      md5: 6d54116399fd7f3bbb54db85b180ea8e
+      size: 46922

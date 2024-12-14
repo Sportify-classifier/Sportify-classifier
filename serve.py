@@ -2,13 +2,24 @@ import bentoml
 from bentoml import Service
 from bentoml.io import Image, JSON
 import json
+import os
+from flask import Flask, render_template
+
+
 
 
 sports_model_ref = bentoml.pytorch.get("sports_classifier_model:latest")
-
 sports_model_runner = sports_model_ref.to_runner()
-
 svc = Service("sports_classifier_service", runners=[sports_model_runner])
+
+app = Flask(__name__, template_folder='templates')
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+svc.mount_wsgi_app(app, path="/app")
+
 
 @svc.api(input=Image(), output=JSON())
 def predict(image):
@@ -24,4 +35,4 @@ def predict(image):
     # Postprocess
     predictions = postprocess_fn(logits)
 
-    return json.dumps(predictions)
+    return predictions

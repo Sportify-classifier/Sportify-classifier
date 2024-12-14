@@ -12,3 +12,4 @@ seaborn
 pyyaml
 dvc[gs]
 wandb
+flask
