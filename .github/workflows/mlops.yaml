@@ -97,6 +97,65 @@ jobs:
           echo "Listing downloaded files..."
           ls -la ./evaluation_output
 
+      # Construire et pousser l'image Docker via Cloud Build
+      - name: Build and push Docker image
+        run: |
+          echo "Building Docker image and pushing to GCR..."
+          # Encoder la clé de service en base64
+          SERVICE_ACCOUNT_KEY_BASE64=$(cat service-account-key.json | base64 -w 0)
+          gcloud builds submit . \
+            --config=cloudbuild.yaml \
+            --substitutions=_GIT_KEY=$GIT_KEY,_WANDB_KEY=$WANDB_KEY,_SERVICE_ACCOUNT_KEY=$SERVICE_ACCOUNT_KEY_BASE64
+
+      - name: Launch Vertex AI job
+        id: launch_job
+        run: |
+          echo "Launching Vertex AI Job..."
+          JOB_ID=$(gcloud ai custom-jobs create \
+          --region=us-central1 \
+          --display-name="entraînement-mlops" \
+          --worker-pool-spec=machine-type=n1-standard-4,container-image-uri=gcr.io/modern-bond-303506/train_image:latest \
+          --service-account=sportify-classier@modern-bond-303506.iam.gserviceaccount.com \
+          --format='value(name)')
+          echo "Vertex AI Job ID: $JOB_ID"
+          echo "JOB_ID=$JOB_ID" >> $GITHUB_ENV
+
+      - name: Wait for job to finish
+        run: |
+          echo "Waiting for Vertex AI Job to finish..."
+          STATUS=$(gcloud ai custom-jobs describe "${JOB_ID}" --region=us-central1 --format='value(state)')
+          MAX_RETRIES=60
+          COUNT=0
+          while [ "$STATUS" != "JOB_STATE_SUCCEEDED" ] && [ "$STATUS" != "JOB_STATE_FAILED" ] && [ $COUNT -lt $MAX_RETRIES ]; do
+            echo "Job status: $STATUS"
+            echo "Fetching logs for Job ID: ${JOB_ID}..."
+            gcloud logging read "resource.type=ml_job AND resource.labels.job_id=\"${JOB_ID}\"" --limit=50 --format="value(textPayload)"
+            sleep 30
+            STATUS=$(gcloud ai custom-jobs describe "${JOB_ID}" --region=us-central1 --format='value(state)')
+            COUNT=$((COUNT + 1))
+          done
+
+          echo "Final job status: $STATUS"
+          if [ "$STATUS" = "JOB_STATE_FAILED" ]; then
+            echo "Fetching detailed logs for failure..."
+            gcloud logging read "resource.type=ml_job AND resource.labels.job_id=\"${JOB_ID}\"" --limit=100 --format="value(textPayload)"
+            exit 1
+          elif [ $COUNT -ge $MAX_RETRIES ]; then
+            echo "Job did not finish within the expected time."
+            exit 1
+          fi
+        env:
+          JOB_ID: ${{ env.JOB_ID }}
+
+      - name: Pull evaluation_output from GCS
+        run: |
+          echo "Ensuring local evaluation_output directory exists..."
+          mkdir -p ./evaluation_output
+          echo "Fetching evaluation_output from GCS..."
+          gsutil -m cp -r "gs://sportify_classifier/evaluation_output/*" ./evaluation_output
+          echo "Listing downloaded files..."
+          ls -la ./evaluation_output
+
       - name: Create Pull Request to main
         uses: peter-evans/create-pull-request@v5
         with:
