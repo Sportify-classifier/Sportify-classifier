@@ -17,45 +17,48 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
+      # Check the connect to gcloud, but unfortunately, we didn't find the solution to put a secret.
       - name: Activate Service Account
         run: |
-          echo "${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}" | base64 -d > service-account-key2.json
-          cat service-account-key2.json | jq .
-          gcloud auth activate-service-account --key-file="service-account-key2.json"
+          gcloud auth activate-service-account --key-file="service-account-key.json"
 
+      # For debugging
       - name: List files in context
         run: ls -la
 
+      # set the project
       - name: Configure gcloud
         run: gcloud config set project modern-bond-303506
 
+      # Check the connection to the GCS bucket
       - name: Check GCS Bucket Access
         run: |
           echo "Testing GCS access..."
           gsutil ls gs://sportify_classifier || echo "Bucket access failed, ensure credentials and permissions are correct"
 
+      # Used to transform the service account key into base64 (to keep the json format in the cloudbuild.yaml -> dockerfile)
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Check service account key JSON
         run: cat service-account-key.json | jq .
 
-      # Construire et pousser l'image Docker via Cloud Build
+      # Build and push the docker image to GCR
       - name: Build and push Docker image
         run: |
           echo "Building Docker image and pushing to GCR..."
-          # Encoder la clé de service en base64
           SERVICE_ACCOUNT_KEY_BASE64=$(cat service-account-key.json | base64 -w 0)
           gcloud builds submit . \
             --config=cloudbuild.yaml \
             --substitutions=_GIT_KEY=$GIT_KEY,_WANDB_KEY=$WANDB_KEY,_SERVICE_ACCOUNT_KEY=$SERVICE_ACCOUNT_KEY_BASE64
 
+      # Launch the Vertex AI job
       - name: Launch Vertex AI job
         id: launch_job
         run: |
           echo "Launching Vertex AI Job..."
           JOB_ID=$(gcloud ai custom-jobs create \
-          --region=us-central1 \
+          --region=europe-west1 \
           --display-name="entraînement-mlops" \
           --worker-pool-spec=machine-type=n1-standard-4,container-image-uri=gcr.io/modern-bond-303506/train_image:latest \
           --service-account=sportify-classier@modern-bond-303506.iam.gserviceaccount.com \
@@ -90,6 +93,7 @@ jobs:
         env:
           JOB_ID: ${{ env.JOB_ID }}
 
+      # get evaluation from GCS (Actually not used)
       - name: Pull evaluation_output from GCS
         run: |
           echo "Ensuring local evaluation_output directory exists..."
@@ -99,6 +103,7 @@ jobs:
           echo "Listing downloaded files..."
           ls -la ./evaluation_output
 
+      # Create a pull request
       - name: Create Pull Request to main
         uses: peter-evans/create-pull-request@v5
         with:
@@ -110,4 +115,3 @@ jobs:
           body: |
             [Compare les modèles sur Weights & Biases](https://wandb.ai/sportify/sports-classification)
             Veuillez examiner les résultats et décider si ce modèle doit être fusionné dans la branche principale (`main`).
-          # Ajoutez d'autres options si nécessaire
