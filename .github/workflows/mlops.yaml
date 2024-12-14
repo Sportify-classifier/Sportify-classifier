@@ -17,9 +17,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Activate Service Account
         run: |
-          echo "${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}" > service-account-key2.json
+          printf "%s" "${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}" > service-account-key2.json
+          cat service-account-key2.json | jq . # pour tester
           gcloud auth activate-service-account --key-file="service-account-key2.json"
 
       - name: List files in context
@@ -32,9 +36,6 @@ jobs:
         run: |
           echo "Testing GCS access..."
           gsutil ls gs://sportify_classifier || echo "Bucket access failed, ensure credentials and permissions are correct"
-
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Check service account key JSON
         run: cat service-account-key.json | jq .
