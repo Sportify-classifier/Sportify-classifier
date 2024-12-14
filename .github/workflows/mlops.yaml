@@ -22,8 +22,8 @@ jobs:
 
       - name: Activate Service Account
         run: |
-          printf "%s" "${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}" > service-account-key2.json
-          cat service-account-key2.json | jq . # pour tester
+          echo "${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}" | base64 -d > service-account-key2.json
+          cat service-account-key2.json | jq .
           gcloud auth activate-service-account --key-file="service-account-key2.json"
 
       - name: List files in context
