@@ -7,7 +7,7 @@ ENV GIT_KEY=${_GIT_KEY}
 ENV WANDB_KEY=${_WANDB_KEY}
 ENV SERVICE_ACCOUNT_KEY=${_SERVICE_ACCOUNT_KEY}
 
-# Installer les dépendances nécessaires
+# Installer les dépendances système
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -24,34 +24,27 @@ RUN echo "deb [signed-by=/usr/share/keyrings/google-cloud-archive.gpg] http://pa
 # Installer le SDK Google Cloud
 RUN apt-get update && apt-get install -y google-cloud-sdk && rm -rf /var/lib/apt/lists/*
 
-# Définir le répertoire de travail
 WORKDIR /app
 
-# Cloner le dépôt GitHub en utilisant le Personal Access Token
+# Cloner le dépôt avec la clé Git
 RUN echo "GIT_KEY is: ${GIT_KEY}"
 RUN git clone --branch dev https://${GIT_KEY}@github.com/Sportify-classifier/Sportify-classifier.git /app
 
-# Installer les dépendances Python
-RUN pip install --no-cache-dir -r requirements.txt
+# Installer les dépendances Python, incluant dvc[gcs]
+RUN pip install --no-cache-dir -r requirements.txt dvc[gcs]
 
-# Décoder la clé de service à partir de base64 et la sauvegarder dans un fichier
-# Décoder la clé de service à partir de Base64 et la sauvegarder dans un fichier
-RUN echo "${_SERVICE_ACCOUNT_KEY}" | base64 -d > /app/service-account-key2.json
-
-# Vérifier le fichier JSON décodé
-RUN cat /app/service-account-key2.json | jq .
-
-# Définir la variable d'environnement pour Google Cloud
-ENV GOOGLE_APPLICATION_CREDENTIALS="/app/service-account-key2.json"
-
-# Activer le compte de service
-RUN gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
-
-# Vérifier l'accès à GCS
-RUN gsutil ls gs://sportify_classifier || echo "GCS access failed, ensure credentials and permissions are correct"
-
-# Log to Weights & Biases
+# Installer wandb et se connecter
 RUN wandb login ${WANDB_KEY}
 
-# Définir le comportement par défaut
-CMD ["bash", "-c", "echo 'Running pipeline...' && pwd && ls -la && dvc repro --pull && echo 'Pipeline finished.' && bash"]
+# Décoder la clé de service GCP et l'utiliser
+# RUN echo "${_SERVICE_ACCOUNT_KEY}" | base64 -d > /app/service-account-key2.json
+# RUN cat /app/service-account-key2.json | jq .
+
+# ENV GOOGLE_APPLICATION_CREDENTIALS="/app/service-account-key.json"
+RUN gcloud auth activate-service-account --key-file="/app/service-account-key.json"
+
+# Vérifier l'accès au bucket GCS
+RUN gsutil ls gs://sportify_classifier_secondbucket || echo "GCS access failed, ensure credentials and permissions are correct"
+
+# Le CMD lance finalement le repro (les données sont déjà en cache grâce à dvc pull)
+CMD ["bash", "-c", "echo 'Running pipeline...' && pwd && ls -la && ls data && dvc repro --pull && echo 'Pipeline finished.' && bash"]
