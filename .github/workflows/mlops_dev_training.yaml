@@ -17,7 +17,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Créer la Pull Request vers main
+      # Ajoutez ici vos étapes d'entraînement, si nécessaire.
+
+  create-pull-request:
+    runs-on: ubuntu-latest
+    needs: train
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Crée la Pull Request de dev vers main
       - name: Create Pull Request to main
         uses: peter-evans/create-pull-request@v5
         with:
@@ -30,8 +39,16 @@ jobs:
             [Compare les modèles sur Weights & Biases](https://wandb.ai/sportify/sports-classification)
             Veuillez examiner les résultats générés par la branche `dev`.
           auto-merge: false
-      #- name: Set up Python
-      #  uses: actions/setup-python@v2
+
+  wait-for-approval:
+    needs: create-pull-request
+    runs-on: ubuntu-latest
+    steps:
+      # Étape d'approbation manuelle
+      - name: Await manual approval
+        uses: hmarr/auto-approve-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}      #  uses: actions/setup-python@v2
       #  with:
       #    python-version: 3.12
 
