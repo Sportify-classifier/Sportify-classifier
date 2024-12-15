@@ -2,7 +2,7 @@ prepare:
   seed: 42
   split: 0.3  # 1 - train_split
   image_size: 224 
-  sample_fraction: 0.85 # entre 0 et 1
+  sample_fraction: 1 # entre 0 et 1
   excluded_classes: #voir category_counts.txt
     - sky surfing
     - ultimate
@@ -19,8 +19,8 @@ train:
   seed: 42
   lr: 0.0006
   epochs: 4
-  batch_size: 2
-  num_classes: 20 # minimum 1 jusqu'à 100 (soustraire excluded_classes)
+  batch_size: 16
+  num_classes: 25 # minimum 1 jusqu'à 100 (soustraire excluded_classes)
   num_folds: 5 # minimum 2 sinon erreur (cross-validation)
 
 model:
