@@ -3,7 +3,7 @@ name: MLOps DEV
 on:
   push:
     branches:
-      - dev_test
+      - dev
 
 jobs:
   train:
