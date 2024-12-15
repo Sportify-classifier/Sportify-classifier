@@ -38,6 +38,10 @@ jobs:
       - name: Configure gcloud
         run: gcloud config set project modern-bond-303506
 
+      # connect to wandb
+      - name: Connect to Weights Biases
+        run: wandb login ${{ secrets.WANDB_KEY }}
+
       - name: Set up the project With DVC
         run: dvc repro --pull
 
