@@ -93,16 +93,6 @@ jobs:
         env:
           JOB_ID: ${{ env.JOB_ID }}
 
-      # get evaluation from GCS (Actually not used)
-      - name: Pull evaluation_output from GCS
-        run: |
-          echo "Ensuring local evaluation_output directory exists..."
-          mkdir -p ./evaluation_output
-          echo "Fetching evaluation_output from GCS..."
-          gsutil -m cp -r "gs://sportify_classifier/evaluation_output/*" ./evaluation_output
-          echo "Listing downloaded files..."
-          ls -la ./evaluation_output
-
       # Create a pull request
       - name: Create Pull Request to main
         uses: peter-evans/create-pull-request@v5

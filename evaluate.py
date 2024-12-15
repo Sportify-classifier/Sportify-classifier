@@ -288,10 +288,10 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir, output_dir_gcs=
                 print(f"Fichier {file_name} copié dans {fixed_output_dir}")
             else:
                 print(f"Le fichier source et destination sont identiques pour {file_name}, pas de copie effectuée.")
-
-    if output_dir_gcs:
-        print(f"Copie des résultats d'évaluation dans GCS : {output_dir_gcs}")
-        os.system(f"gsutil -m cp -r {output_dir} {output_dir_gcs}")
+    # Commentented because to much errors
+    # if output_dir_gcs:
+    #     print(f"Copie des résultats d'évaluation dans GCS : {output_dir_gcs}")
+    #     os.system(f"gsutil -m cp -r {output_dir} {output_dir_gcs}")
 
 if __name__ == "__main__":
     if len(sys.argv) != 5:
