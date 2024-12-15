@@ -4,6 +4,8 @@ stages:
     deps:
       - data/all_data
       - data_loader.py
+    outs:
+      - data/prepared
     params:
       - prepare
       - data
