@@ -1,0 +1,106 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: python data_loader.py data/all_data data/prepared
+    deps:
+    - path: data/all_data
+      hash: md5
+      md5: d9136130f3edf731ea7d5bf558c20bd7.dir
+      size: 375986530
+      nfiles: 14493
+    - path: data_loader.py
+      hash: md5
+      md5: 3df803cbda8ed12e142fcc26f7ebf8ed
+      size: 1945
+    params:
+      params.yaml:
+        data:
+          dir: ./data/all_data
+        prepare:
+          seed: 42
+          split: 0.3
+          image_size: 224
+          sample_fraction: 0.3
+          excluded_classes:
+          - sky surfing
+          max_images_per_class: 107
+        train:
+          seed: 42
+          lr: 0.005
+          epochs: 2
+          batch_size: 16
+          num_classes: 10
+          num_folds: 3
+    outs:
+    - path: data/prepared
+      hash: md5
+      md5: d2022cb200e31faeead626174ed9ecac.dir
+      size: 7933600
+      nfiles: 320
+  train:
+    cmd: python train.py data/prepared model_versions
+    deps:
+    - path: data/prepared
+      hash: md5
+      md5: d2022cb200e31faeead626174ed9ecac.dir
+      size: 7933600
+      nfiles: 320
+    - path: train.py
+      hash: md5
+      md5: 52320f89f1e6da7034a1b0e19ef68f0b
+      size: 7531
+    params:
+      params.yaml:
+        model:
+          name: google/efficientnet-b0
+        train:
+          seed: 42
+          lr: 0.005
+          epochs: 2
+          batch_size: 16
+          num_classes: 10
+          num_folds: 3
+    outs:
+    - path: model_versions
+      hash: md5
+      md5: 29e02c1108894413c350c9f7a69d5e9e.dir
+      size: 31322862
+      nfiles: 5
+  evaluate:
+    cmd: python evaluate.py model_versions data/prepared evaluation_outputs gs://sportify_classifier/evaluation_output
+    deps:
+    - path: data/prepared
+      hash: md5
+      md5: d2022cb200e31faeead626174ed9ecac.dir
+      size: 7933600
+      nfiles: 320
+    - path: evaluate.py
+      hash: md5
+      md5: 0232e130220e644ca4effd0d86c14617
+      size: 11457
+    - path: model_versions
+      hash: md5
+      md5: 29e02c1108894413c350c9f7a69d5e9e.dir
+      size: 31322862
+      nfiles: 5
+    outs:
+    - path: evaluation_outputs/confusion_matrix.png
+      hash: md5
+      md5: 16504fa1c0aefa0ca640bcbdf87174e3
+      size: 50407
+    - path: evaluation_outputs/loss_curve.png
+      hash: md5
+      md5: c25893658703b7baad9b474b9b1c39fd
+      size: 22865
+    - path: evaluation_outputs/metrics.json
+      hash: md5
+      md5: f1e2944aba4ca29a51e30a6d3db96bcf
+      size: 2253
+    - path: evaluation_outputs/normalized_confusion_matrix.png
+      hash: md5
+      md5: 8e4788d986bf7bceefaeee51dce25f75
+      size: 69433
+    - path: evaluation_outputs/precision_recall_curves.png
+      hash: md5
+      md5: 6d54116399fd7f3bbb54db85b180ea8e
+      size: 46922
