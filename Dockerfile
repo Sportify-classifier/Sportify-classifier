@@ -36,6 +36,8 @@ RUN pip install --no-cache-dir -r requirements.txt dvc[gcs]
 # Installer wandb et se connecter
 RUN wandb login ${WANDB_KEY}
 
+COPY data/all_data /app/data
+
 # Décoder la clé de service GCP et l'utiliser
 RUN echo "${_SERVICE_ACCOUNT_KEY}" | base64 -d > /app/service-account-key2.json
 RUN cat /app/service-account-key2.json | jq .
