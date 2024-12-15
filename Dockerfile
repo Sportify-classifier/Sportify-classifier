@@ -52,9 +52,8 @@ RUN gsutil ls gs://sportify_classifier || echo "GCS access failed, ensure creden
 RUN dvc remote list
 
 # Effectuer un dvc pull pour récupérer les données
-# Au lieu de dvc pull, on télécharge et dézippe le contenu dans /app/data/CONTENUE_DU_ZIP
 RUN mkdir -p /app/data \
-    && curl -L -o data.zip "https://dl-cg6b4xma.swisstransfer.com/api/download/6fc730c8-6d29-42e7-8dfc-67599d30549c/85b19828-3739-4b0f-a397-a9f938227178" \
+    && curl -L -o data.zip "https://storage.googleapis.com/dataset_sportify/all_data.zip" \
     && unzip data.zip -d /app/data \
     && rm data.zip
 
