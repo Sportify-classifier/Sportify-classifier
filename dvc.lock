@@ -5,13 +5,13 @@ stages:
     deps:
     - path: data/all_data
       hash: md5
-      md5: cec9c03ade7ae449c4cfcd28bee30ecc.dir
-      size: 375855134
-      nfiles: 14492
+      md5: d9136130f3edf731ea7d5bf558c20bd7.dir
+      size: 375986530
+      nfiles: 14493
     - path: data_loader.py
       hash: md5
-      md5: e4ff74eb3be0a946f9fb14f1ab247078
-      size: 1995
+      md5: 3df803cbda8ed12e142fcc26f7ebf8ed
+      size: 1945
     params:
       params.yaml:
         data:
@@ -20,7 +20,7 @@ stages:
           seed: 42
           split: 0.3
           image_size: 224
-          sample_fraction: 0.19
+          sample_fraction: 0.85
           excluded_classes:
           - sky surfing
           - ultimate
@@ -35,28 +35,28 @@ stages:
         train:
           seed: 42
           lr: 0.0006
-          epochs: 2
-          batch_size: 16
-          num_classes: 10
-          num_folds: 2
+          epochs: 1
+          batch_size: 1
+          num_classes: 2
+          num_folds: 5
     outs:
     - path: data/prepared
       hash: md5
-      md5: 04f1d437c7d0682bc14e37ab6e55e161.dir
-      size: 6012495
-      nfiles: 220
+      md5: f43e98b9f95cfe5b9816fabb4542527b.dir
+      size: 5741625
+      nfiles: 204
   train:
     cmd: python train.py data/prepared model_versions
     deps:
     - path: data/prepared
       hash: md5
-      md5: 04f1d437c7d0682bc14e37ab6e55e161.dir
-      size: 6012495
-      nfiles: 220
+      md5: f43e98b9f95cfe5b9816fabb4542527b.dir
+      size: 5741625
+      nfiles: 204
     - path: train.py
       hash: md5
-      md5: cb23105ab38193d0f75a00145fb6dd74
-      size: 6990
+      md5: 024bb75e3ccfacb287b09ac0bd204123
+      size: 6782
     params:
       params.yaml:
         model:
@@ -64,15 +64,15 @@ stages:
         train:
           seed: 42
           lr: 0.0006
-          epochs: 2
-          batch_size: 16
-          num_classes: 10
-          num_folds: 2
+          epochs: 1
+          batch_size: 1
+          num_classes: 2
+          num_folds: 5
     outs:
     - path: model_versions
       hash: md5
-      md5: e483960aa7fad1ccecb13607d23b3cde.dir
-      size: 31332670
+      md5: 9ecc61fd5c06fcfbdac3bfa81a1d247b.dir
+      size: 31246381
       nfiles: 5
   evaluate:
     cmd: python evaluate.py model_versions data/prepared evaluation_outputs

@@ -1,0 +1,54 @@
+name: MLOps Main
+
+on:
+  push:
+    branches:
+      - dev_test
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    env:
+      GIT_KEY: ${{ secrets.GIT_KEY }}
+      WANDB_KEY: ${{ secrets.WANDB_KEY }}
+      GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.12
+      
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      # Check the connect to gcloud, but unfortunately, we didn't find the solution to put a secret.
+      - name: Activate Service Account
+        run: |
+          gcloud auth activate-service-account --key-file="service-account-key.json"
+
+      # For debugging
+      - name: List files in context
+        run: ls -la
+
+      # set the project
+      - name: Configure gcloud
+        run: gcloud config set project modern-bond-303506
+
+      - name: Set up the project With DVC
+        run: dvc repro --pull
+
+      - name: Create Pull Request to main
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.SECRET }}
+          commit-message: "Automated results from dev branch"
+          branch: dev
+          base: main
+          title: "Merge dev into main - Evaluation Results"
+          body: |
+            [Compare les modèles sur Weights & Biases](https://wandb.ai/sportify/sports-classification)
+            Veuillez examiner les résultats et décider si ce modèle doit être fusionné dans la branche principale (`main`).
