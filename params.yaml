@@ -1,7 +1,8 @@
 prepare:
   seed: 42
   split: 0.3  # 1 - train_split
-  sample_fraction: 0.2
+  image_size: 224 
+  sample_fraction: 0.3
   excluded_classes: #voir category_counts.txt pour comprendre
     - sky surfing
   max_images_per_class: 107 #voir category_counts.txt pour comprendre
@@ -9,10 +10,10 @@ prepare:
 train:
   seed: 42
   lr: 0.005
-  epochs: 2
+  epochs: 3
   batch_size: 16
   num_classes: 10
-  num_folds: 3
+  num_folds: 3 #minimum 2
 
 model:
   name: google/efficientnet-b0

@@ -9,6 +9,7 @@ data/valid/
 
 ## Python
 .venv/
+.venv2/
 
 #Service-key
 /service-account-key.json
@@ -181,4 +182,4 @@ cython_debug/
 /wandb_run_id.txt
 
 evaluation_outputs/
-evaluation_output/
+evaluation_output/data/prepared

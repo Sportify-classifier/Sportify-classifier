@@ -113,5 +113,4 @@ jobs:
           title: "Merge dev into main - Evaluation Results"
           body: |
             [Compare les modèles sur Weights & Biases](https://wandb.ai/sportify/sports-classification)
-            Veuillez examiner les résultats et décider si ce modèle doit être fusionné dans la branche principale (`main`). Les graphiques et résultats détaillés sont inclus dans cette PR.
-          draft: false
+            Veuillez examiner les résultats et décider si ce modèle doit être fusionné dans la branche principale (`main`).

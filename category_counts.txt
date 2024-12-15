@@ -91,7 +91,7 @@ Nombre d'images par catégorie (ordre croissant) :
 - polo : 167 images
 - rings : 167 images
 - swimming : 167 images
-- high jump : 169 images
+- high jump : 168 images
 - rollerblade racing : 169 images
 - roller derby : 173 images
 - canoe slamon : 174 images
@@ -103,3 +103,5 @@ Nombre d'images par catégorie (ordre croissant) :
 - nascar racing : 199 images
 - formula 1 racing : 200 images
 - football : 201 images
+
+Toutes les images sont au bon format et aux bonnes dimensions.
