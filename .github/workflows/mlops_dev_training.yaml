@@ -17,16 +17,35 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Ajoutez ici vos étapes d'entraînement, si nécessaire.
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.12
 
-  create-pull-request:
-    runs-on: ubuntu-latest
-    needs: train
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
 
-      # Crée la Pull Request de dev vers main
+      # Check the connect to gcloud, but unfortunately, we didn't find the solution to put a secret.
+      - name: Activate Service Account
+        run: |
+          gcloud auth login --cred-file="service-account-key.json"
+
+      # For debugging
+      - name: List files in context
+        run: ls -la
+
+      # set the project
+      - name: Configure gcloud
+        run: gcloud config set project modern-bond-303506
+
+      # connect to wandb
+      - name: Connect to Weights Biases
+        run: wandb login ${{ secrets.WANDB_KEY }}
+
+      - name: Set up the project With DVC
+        run: dvc repro --pull
+
+      # Créer la Pull Request vers main
       - name: Create Pull Request to main
         uses: peter-evans/create-pull-request@v5
         with:
@@ -38,52 +57,3 @@ jobs:
           body: |
             [Compare les modèles sur Weights & Biases](https://wandb.ai/sportify/sports-classification)
             Veuillez examiner les résultats générés par la branche `dev`.
-          auto-merge: false
-
-  wait-for-approval:
-    needs: create-pull-request
-    runs-on: ubuntu-latest
-    steps:
-      # Étape d'approbation manuelle
-      - name: Await manual approval
-        uses: hmarr/auto-approve-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}      #  uses: actions/setup-python@v2
-      #  with:
-      #    python-version: 3.12
-
-      #- name: Install Dependencies
-      #  run: pip install -r requirements.txt
-
-      # Check the connect to gcloud, but unfortunately, we didn't find the solution to put a secret.
-      #- name: Activate Service Account
-      #  run: |
-      #    gcloud auth activate-service-account --key-file="service-account-key.json"
-
-      # For debugging
-      #- name: List files in context
-      #  run: ls -la
-
-      # set the project
-      # - name: Configure gcloud
-      #  run: gcloud config set project modern-bond-303506
-
-      # connect to wandb
-#      - name: Connect to Weights Biases
-#        run: wandb login ${{ secrets.WANDB_KEY }}
-
-      # - name: Set up the project With DVC
-      #  run: dvc repro --pull
-
-      # Créer la Pull Request vers main
-#      - name: Create Pull Request to main
-#        uses: peter-evans/create-pull-request@v5
-#        with:
-#          token: ${{ secrets.SECRET }}
-#          commit-message: "Automated results from dev branch"
-#          branch: dev
-#          base: main
-#          title: "Merge dev into main - Evaluation Results"
-#          body: |
-#            [Compare les modèles sur Weights & Biases](https://wandb.ai/sportify/sports-classification)
-#            Veuillez examiner les résultats générés par la branche `dev`.
