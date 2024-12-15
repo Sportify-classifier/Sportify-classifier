@@ -39,3 +39,9 @@ stages:
           batch_size: 16
           num_classes: 20
           num_folds: 5
+    outs:
+    - path: data/prepared
+      hash: md5
+      md5: a0b51e9ff38aea04b08c23bc816ea18a.dir
+      size: 53350941
+      nfiles: 2040
