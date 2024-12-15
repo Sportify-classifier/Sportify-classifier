@@ -42,12 +42,6 @@ jobs:
       - name: Check service account key JSON
         run: cat service-account-key.json | jq .
 
-      - name: Install Dependencies
-        run: pip install --no-cache-dir -r requirements.txt
-
-      - name: Set up the project With DVC
-        run: dvc repro --pull
-
       # Construire et pousser l'image Docker via Cloud Build en passant les substitutions
       - name: Build and push Docker image
         run: |
