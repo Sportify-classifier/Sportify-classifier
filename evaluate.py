@@ -172,7 +172,6 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir, output_dir_gcs=
         is_best_model=is_best_model
     )
 
-
     # Rapport de classification
     classif_report = classification_report(
         all_labels,
