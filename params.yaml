@@ -2,18 +2,26 @@ prepare:
   seed: 42
   split: 0.3  # 1 - train_split
   image_size: 224 
-  sample_fraction: 0.3
-  excluded_classes: #voir category_counts.txt pour comprendre
+  sample_fraction: 0.85 # entre 0 et 1
+  excluded_classes: #voir category_counts.txt
     - sky surfing
-  max_images_per_class: 107 #voir category_counts.txt pour comprendre
+    - ultimate
+    - wingsuit flying
+    - arm wrestling
+    - horseshoe pitching
+    - water cycling
+    - wheelchair basketball
+    - baton twirling
+    - hydroplane racing
+  max_images_per_class: 120 #voir category_counts.txt
 
 train:
   seed: 42
-  lr: 0.005
-  epochs: 2
+  lr: 0.0006
+  epochs: 4
   batch_size: 16
-  num_classes: 10
-  num_folds: 3 #minimum 2
+  num_classes: 20 # minimum 1 jusqu'à 100 (soustraire excluded_classes)
+  num_folds: 5 # minimum 2 sinon erreur (cross-validation)
 
 model:
   name: google/efficientnet-b0

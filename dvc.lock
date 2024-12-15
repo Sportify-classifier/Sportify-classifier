@@ -5,13 +5,13 @@ stages:
     deps:
     - path: data/all_data
       hash: md5
-      md5: d9136130f3edf731ea7d5bf558c20bd7.dir
-      size: 375986530
-      nfiles: 14493
+      md5: cec9c03ade7ae449c4cfcd28bee30ecc.dir
+      size: 375855134
+      nfiles: 14492
     - path: data_loader.py
       hash: md5
-      md5: 3df803cbda8ed12e142fcc26f7ebf8ed
-      size: 1945
+      md5: e4ff74eb3be0a946f9fb14f1ab247078
+      size: 1995
     params:
       params.yaml:
         data:
@@ -20,87 +20,95 @@ stages:
           seed: 42
           split: 0.3
           image_size: 224
-          sample_fraction: 0.3
+          sample_fraction: 0.19
           excluded_classes:
           - sky surfing
-          max_images_per_class: 107
+          - ultimate
+          - wingsuit flying
+          - arm wrestling
+          - horseshoe pitching
+          - water cycling
+          - wheelchair basketball
+          - baton twirling
+          - hydroplane racing
+          max_images_per_class: 120
         train:
           seed: 42
-          lr: 0.005
+          lr: 0.0006
           epochs: 2
           batch_size: 16
           num_classes: 10
-          num_folds: 3
+          num_folds: 2
     outs:
     - path: data/prepared
       hash: md5
-      md5: 49b65672f75dc4dbbfee18f2e80e075c.dir
-      size: 7865013
-      nfiles: 320
+      md5: 04f1d437c7d0682bc14e37ab6e55e161.dir
+      size: 6012495
+      nfiles: 220
   train:
     cmd: python train.py data/prepared model_versions
     deps:
     - path: data/prepared
       hash: md5
-      md5: 49b65672f75dc4dbbfee18f2e80e075c.dir
-      size: 7865013
-      nfiles: 320
+      md5: 04f1d437c7d0682bc14e37ab6e55e161.dir
+      size: 6012495
+      nfiles: 220
     - path: train.py
       hash: md5
-      md5: 52320f89f1e6da7034a1b0e19ef68f0b
-      size: 7531
+      md5: cb23105ab38193d0f75a00145fb6dd74
+      size: 6990
     params:
       params.yaml:
         model:
           name: google/efficientnet-b0
         train:
           seed: 42
-          lr: 0.005
+          lr: 0.0006
           epochs: 2
           batch_size: 16
           num_classes: 10
-          num_folds: 3
+          num_folds: 2
     outs:
     - path: model_versions
       hash: md5
-      md5: b32f05d3d1ba21bf275aae5918caab8f.dir
-      size: 31324062
+      md5: e483960aa7fad1ccecb13607d23b3cde.dir
+      size: 31332670
       nfiles: 5
   evaluate:
     cmd: python evaluate.py model_versions data/prepared evaluation_outputs
     deps:
     - path: data/prepared
       hash: md5
-      md5: 49b65672f75dc4dbbfee18f2e80e075c.dir
-      size: 7865013
-      nfiles: 320
+      md5: 04f1d437c7d0682bc14e37ab6e55e161.dir
+      size: 6012495
+      nfiles: 220
     - path: evaluate.py
       hash: md5
-      md5: 8618cf193bfcb6fd6ad00081d6015bde
-      size: 11372
+      md5: 036680def3579c1c2995b2104f8872a1
+      size: 8321
     - path: model_versions
       hash: md5
-      md5: b32f05d3d1ba21bf275aae5918caab8f.dir
-      size: 31324062
+      md5: e483960aa7fad1ccecb13607d23b3cde.dir
+      size: 31332670
       nfiles: 5
     outs:
     - path: evaluation_outputs/confusion_matrix.png
       hash: md5
-      md5: 0ae37de07a9ab51b2a269fbe7f440ab6
-      size: 50074
+      md5: 8cc9c58a2a6cf7a5c9719164b5c83a1c
+      size: 47291
     - path: evaluation_outputs/loss_curve.png
       hash: md5
-      md5: 5547e68d09246513934aa308fbe083e8
-      size: 24325
+      md5: 499044ee178045be03c0a7d3b84e3654
+      size: 25569
     - path: evaluation_outputs/metrics.json
       hash: md5
-      md5: d54131589722b080b66b0fd6616e59c2
-      size: 2272
+      md5: fa30b6256a29d39924d8a5c0936ad42e
+      size: 2374
     - path: evaluation_outputs/normalized_confusion_matrix.png
       hash: md5
-      md5: 4586c9fcdfa3933101179375e311cbd5
-      size: 66400
+      md5: 61cc579129767634b606b5c7972923d9
+      size: 62435
     - path: evaluation_outputs/precision_recall_curves.png
       hash: md5
-      md5: 9de2e9512cac3744bf338c63db573bcc
-      size: 46386
+      md5: ccb9576fd493fc4fc75f9e4ff64bed1c
+      size: 44358

@@ -1,29 +1,28 @@
 import os
 import random
-import yaml
 import shutil
+import yaml
+import numpy as np
 from PIL import Image
 from torch.utils.data import Dataset
-import torch
-import wandb
-from sklearn.metrics import precision_recall_curve, roc_curve, auc
 import matplotlib.pyplot as plt
-from collections import Counter
+import torch
+from datetime import datetime
+from sklearn.metrics import (precision_recall_curve, average_precision_score)
 from sklearn.preprocessing import label_binarize
-import json, time
+import wandb
+import json
 
+# FOR DATA_LOADER.PY :
 
-
-# Charger le fichier params.yaml
 with open("params.yaml", "r") as f:
     params = yaml.safe_load(f)
 
 def prepare_data(input_data_dir, output_data_dir):
-    # Fixer la seed pour la reproductibilité
+    # pour la reproductibilité
     random_seed = params['prepare'].get("seed", 42)
     random.seed(random_seed)
 
-    # Obtenir toutes les classes disponibles
     all_classes = sorted(os.listdir(input_data_dir))
     excluded_classes = params['prepare'].get("excluded_classes", [])
     # Inclure seulement les classes non exclues
@@ -36,7 +35,7 @@ def prepare_data(input_data_dir, output_data_dir):
     else:
         selected_classes = included_classes
 
-    # Préparer les dossiers de sortie pour train et test
+    # Préparer les dossiers de sortie
     train_output_dir = os.path.join(output_data_dir, 'train')
     test_output_dir = os.path.join(output_data_dir, 'test')
     os.makedirs(train_output_dir, exist_ok=True)
@@ -49,17 +48,14 @@ def prepare_data(input_data_dir, output_data_dir):
         cls_folder = os.path.join(input_data_dir, cls_name)
         img_files = [f for f in os.listdir(cls_folder) if f.endswith(".jpg")]
 
-        # Limiter le nombre d'images par classe pour équilibrer
         max_images_per_class = params['prepare'].get("max_images_per_class")
         if max_images_per_class:
             img_files = img_files[:max_images_per_class]
 
-        # Appliquer la fraction d'échantillonnage
         if sample_fraction < 1.0:
             num_samples = int(len(img_files) * sample_fraction)
             img_files = random.sample(img_files, num_samples)
 
-        # Mélanger les images avant de les séparer
         random.shuffle(img_files)
         train_split = 1 - params['prepare'].get("split", 0.2)
         num_train = int(len(img_files) * train_split)
@@ -77,44 +73,7 @@ def prepare_data(input_data_dir, output_data_dir):
 
     print(f"Données préparées et enregistrées dans {output_data_dir}")
 
-class SportsDataset(Dataset):
-    def __init__(self, data_dir, feature_extractor):
-        # Initialiser le dataset
-        self.data_dir = data_dir
-        self.feature_extractor = feature_extractor
-        self.img_paths = []
-        self.labels = []
-        self.classes = sorted(os.listdir(data_dir))
-
-        # Parcourir chaque classe et collecter les images
-        for idx, cls_name in enumerate(self.classes):
-            cls_folder = os.path.join(data_dir, cls_name)
-            img_files = [f for f in os.listdir(cls_folder) if f.endswith(".jpg")]
-            for img_file in img_files:
-                self.img_paths.append(os.path.join(cls_folder, img_file))
-                self.labels.append(idx)
-
-    def __len__(self):
-        # Retourne la taille du dataset
-        return len(self.img_paths)
-
-    def __getitem__(self, idx):
-        # Obtenir l'image et son label
-        img_path = self.img_paths[idx]
-        image = Image.open(img_path).convert("RGB")
-        inputs = self.feature_extractor(images=image, return_tensors="pt")
-        inputs['labels'] = torch.tensor(self.labels[idx], dtype=torch.long)
-        return inputs
-
-def create_versioned_dir(base_dir, prefix):
-    # Créer un dossier versionné avec un horodatage
-    from datetime import datetime
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    versioned_dir = os.path.join(base_dir, f"{prefix}_{timestamp}")
-    os.makedirs(versioned_dir, exist_ok=True)
-    return versioned_dir
-
-
+    
 def log_class_summary_to_wandb(train_dir, test_dir, num_images_to_log=5):
     """
     Log un tableau W&B résumant la distribution des classes :
@@ -122,31 +81,24 @@ def log_class_summary_to_wandb(train_dir, test_dir, num_images_to_log=5):
     - Exemples d'images (5 par classe).
     - Nombre d'images dans le train.
     - Nombre d'images dans le test.
-    Ajoute également deux graphiques pour la répartition des classes.
+    Et ajoute également deux graphiques pour la répartition des classes.
     """
-    # Créer le tableau principal
     table_sum = wandb.Table(columns=["Class Name", "Example Images", "Train Count", "Test Count"])
 
-    # Données pour les graphiques
     train_table = wandb.Table(columns=["Class Name", "Train Count"])
     test_table = wandb.Table(columns=["Class Name", "Test Count"])
 
-    # Obtenir toutes les classes (présentes dans train ou test)
     all_classes = set(os.listdir(train_dir)) | set(os.listdir(test_dir))
 
     for cls_name in sorted(all_classes):
-        # Dossiers pour train et test
         train_class_dir = os.path.join(train_dir, cls_name)
         test_class_dir = os.path.join(test_dir, cls_name)
 
-        # Collecter les exemples d'images
         train_images = [os.path.join(train_class_dir, f) for f in os.listdir(train_class_dir) if f.endswith(".jpg")] if os.path.exists(train_class_dir) else []
         test_images = [os.path.join(test_class_dir, f) for f in os.listdir(test_class_dir) if f.endswith(".jpg")] if os.path.exists(test_class_dir) else []
 
         example_images = [wandb.Image(img) for img in train_images[:num_images_to_log]]
 
-
-        # Ajouter les informations dans le tableau principal
         table_sum.add_data(
             cls_name,
             example_images,
@@ -154,21 +106,17 @@ def log_class_summary_to_wandb(train_dir, test_dir, num_images_to_log=5):
             len(test_images)
         )
 
-        # Ajouter les informations dans les tableaux pour les graphiques
         train_table.add_data(cls_name, len(train_images))
         test_table.add_data(cls_name, len(test_images))
 
-    # Logger le tableau principal dans W&B
     wandb.log({"Class Summary": table_sum})
     print("Résumé des classes loggé dans W&B.")
 
-    # Logger le graphique pour la répartition dans train
     wandb.log({"Class distribution for train": wandb.plot.bar(
         train_table, "Class Name", "Train Count", title="Class distribution for train"
     )})
     print("Graphique de distribution des classes (train) loggé dans W&B.")
 
-    # Logger le graphique pour la répartition dans test
     wandb.log({"Class distribution for test": wandb.plot.bar(
         test_table, "Class Name", "Test Count", title="Class distribution for test"
     )})
@@ -187,26 +135,56 @@ def log_excluded_classes_to_wandb(input_data_dir, excluded_classes, num_images_t
         cls_folder = os.path.join(input_data_dir, cls_name)
 
         if not os.path.exists(cls_folder):
-            # Ignorer si la classe n'existe pas dans les données
             print(f"Classe exclue {cls_name} introuvable dans le répertoire {input_data_dir}.")
             continue
 
-        # Collecter les images de la classe exclue
         img_files = [os.path.join(cls_folder, f) for f in os.listdir(cls_folder) if f.endswith(".jpg")]
 
-        # Sélectionner les exemples d'images
         example_images = [wandb.Image(img) for img in img_files[:num_images_to_log]]
 
-        # Ajouter les informations dans le tableau
         table_ex.add_data(
             cls_name,
             example_images,
             len(img_files)
         )
 
-    # Logger le tableau dans W&B
     wandb.log({"Excluded Classes Summary": table_ex})
     print("Résumé des classes exclues loggé dans W&B.")
+
+
+# FOR TRAIN.PY :
+
+class SportsDataset(Dataset):
+    def __init__(self, data_dir, feature_extractor):
+        # Initialiser le dataset
+        self.data_dir = data_dir
+        self.feature_extractor = feature_extractor
+        self.img_paths = []
+        self.labels = []
+        self.classes = sorted(os.listdir(data_dir))
+
+        for idx, cls_name in enumerate(self.classes):
+            cls_folder = os.path.join(data_dir, cls_name)
+            img_files = [f for f in os.listdir(cls_folder) if f.endswith(".jpg")]
+            for img_file in img_files:
+                self.img_paths.append(os.path.join(cls_folder, img_file))
+                self.labels.append(idx)
+
+    def __len__(self):
+        return len(self.img_paths)
+
+    def __getitem__(self, idx):
+        img_path = self.img_paths[idx]
+        image = Image.open(img_path).convert("RGB")
+        inputs = self.feature_extractor(images=image, return_tensors="pt")
+        inputs['labels'] = torch.tensor(self.labels[idx], dtype=torch.long)
+        return inputs
+
+def calculate_accuracy(predictions, labels):
+    predicted_labels = predictions.argmax(dim=1)
+    correct = (predicted_labels == labels).sum().item()
+    total = labels.size(0)
+    return correct / total
 
 def log_metrics_to_wandb(epoch, train_loss, val_loss, train_accuracy, val_accuracy):
     """
@@ -221,53 +199,26 @@ def log_metrics_to_wandb(epoch, train_loss, val_loss, train_accuracy, val_accura
     })
     print(f"Metrics logged for epoch {epoch + 1}.")
 
-def calculate_accuracy(predictions, labels):
-    """
-    Calcule l'accuracy à partir des prédictions et des labels.
-    """
-    predicted_labels = predictions.argmax(dim=1)
-    correct = (predicted_labels == labels).sum().item()
-    total = labels.size(0)
-    return correct / total
+def preprocess(pil_img: Image):
+    pil_img = pil_img.convert('RGB')
+    pil_img = pil_img.resize((224, 224))
+    x = np.array(pil_img).astype(np.float32) / 255.0
+    x = np.transpose(x, (2, 0, 1))  # [3,224,224]
+    x = np.expand_dims(x, axis=0)  # [1,3,224,224]
+    return torch.from_numpy(x)
 
-def log_artifact_to_wandb(artifact_name, artifact_type, artifact_dir):
-    """
-    Log un artefact (modèle, données, visualisations) dans W&B.
-    """
-    artifact = wandb.Artifact(artifact_name, type=artifact_type)
-    artifact.add_dir(artifact_dir)
-    wandb.log_artifact(artifact)
+def create_versioned_dir(base_dir, prefix): 
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    versioned_dir = os.path.join(base_dir, f"{prefix}_{timestamp}")
+    os.makedirs(versioned_dir, exist_ok=True)
+    return versioned_dir
 
-def log_class_metrics_to_wandb(classif_report, classes):
-    """
-    Log precision, recall, and F1-score as bar charts to W&B.
+# FOR EVALUATE.PY :
 
-    Args:
-        classif_report: Classification report as a dictionary.
-        classes: List of class names.
-    """
-    metrics = ['precision', 'recall', 'f1-score']
-    for metric in metrics:
-        # Extraire les valeurs métriques pour chaque classe
-        metric_values = [classif_report[cls][metric] for cls in classes]
-
-        # Créer un tableau pour W&B
-        table = wandb.Table(data=[[cls, val] for cls, val in zip(classes, metric_values)],
-                            columns=["Class", metric.capitalize()])
-
-        # Logger en tant que bar chart
-        wandb.log({
-            f"{metric.capitalize()} per Class": wandb.plot.bar(
-                table, "Class", metric.capitalize(), title=f"{metric.capitalize()} per Class"
-            )
-        })
+# Create_versioned_dir déjà défini dans utils/train.py
 
 def update_best_accuracy(current_accuracy, metrics_file="best_metrics.json"):
-    """
-    Met à jour la meilleure précision dans un fichier JSON.
-    """
     try:
-        # Convertir en float pour éviter des erreurs de type
         current_accuracy = float(current_accuracy)
     except ValueError:
         print("Erreur : current_accuracy n'est pas un float valide.")
@@ -275,7 +226,6 @@ def update_best_accuracy(current_accuracy, metrics_file="best_metrics.json"):
 
     best_accuracy = 0  # Valeur par défaut si le fichier est vide ou n'existe pas
 
-    # Vérifier si le fichier existe et charger son contenu
     if os.path.exists(metrics_file) and os.path.getsize(metrics_file) > 0:
         with open(metrics_file, "r") as f:
             try:
@@ -286,7 +236,6 @@ def update_best_accuracy(current_accuracy, metrics_file="best_metrics.json"):
                 print(f"Fichier {metrics_file} corrompu. Réinitialisation.")
                 best_accuracy = 0
 
-    # Comparer et mettre à jour si nécessaire
     if current_accuracy > best_accuracy:
         print(f"Nouvelle meilleure précision trouvée : {current_accuracy}")
         with open(metrics_file, "w") as f:
@@ -307,26 +256,22 @@ def update_wandb_tags(project_name, current_run_id, is_best_model):
         runs = api.runs(project_name)
 
         for run in runs:
-            run_tags = set(run.tags)  # Utilisation de set pour éviter les doublons
+            run_tags = set(run.tags)
 
-            # Si ce n'est pas le run actuel, retirer les anciens tags
             if run.id != current_run_id:
                 if "last_evaluation" in run_tags:
                     run_tags.remove("last_evaluation")
                 if "best_model" in run_tags and is_best_model:
                     run_tags.remove("best_model")
                 
-                # Gérer le tag `tracked_model`
                 if "best_model" in run_tags or "last_evaluation" in run_tags:
                     run_tags.add("tracked_model")
                 else:
                     run_tags.discard("tracked_model")
 
-                # Appliquer les modifications
                 run.tags = list(run_tags)
                 run.update()
 
-        # Gérer les tags pour le run actuel
         current_run = api.run(f"{project_name}/{current_run_id}")
         current_run_tags = set(current_run.tags)
         current_run_tags.add("tracked_model")
@@ -334,7 +279,6 @@ def update_wandb_tags(project_name, current_run_id, is_best_model):
         if is_best_model:
             current_run_tags.add("best_model")
 
-        # Appliquer les modifications au run actuel
         current_run.tags = list(current_run_tags)
         current_run.update()
 
@@ -342,6 +286,103 @@ def update_wandb_tags(project_name, current_run_id, is_best_model):
 
     except Exception as e:
         print(f"Erreur lors de la mise à jour des tags dans W&B : {str(e)}")
+
+def plot_precision_recall_curves(all_labels, all_predictions, classes, output_dir):
+    y_test = label_binarize(all_labels, classes=range(len(classes)))
+    y_score = label_binarize(all_predictions, classes=range(len(classes)))
+
+    plt.figure(figsize=(10, 8))
+    for i in range(len(classes)):
+        precision, recall, _ = precision_recall_curve(y_test[:, i], y_score[:, i])
+        average_precision = average_precision_score(y_test[:, i], y_score[:, i])
+        plt.step(recall, precision, where='post', label=f'{classes[i]} (AP={average_precision:.2f})')
+
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.title('Courbe Precision-Recall')
+    plt.legend()
+    plt.savefig(os.path.join(output_dir, 'precision_recall_curves.png'))
+    plt.close()
+    print(f"Courbes Precision-Recall sauvegardées dans {os.path.join(output_dir, 'precision_recall_curves.png')}")
+
+def log_class_metrics_to_wandb(classif_report, classes):
+    """
+    Log precision, recall, and F1-score as bar charts to W&B.
+
+    """
+    metrics = ['precision', 'recall', 'f1-score']
+    for metric in metrics:
+        metric_values = [classif_report[cls][metric] for cls in classes]
+
+        table = wandb.Table(data=[[cls, val] for cls, val in zip(classes, metric_values)],
+                            columns=["Class", metric.capitalize()])
+
+        wandb.log({
+            f"{metric.capitalize()} per Class": wandb.plot.bar(
+                table, "Class", metric.capitalize(), title=f"{metric.capitalize()} per Class"
+            )
+        })
+
+def generate_html_report(metrics, output_dir):
+    # Préparer les métriques au format HTML
+    metrics_html = '''
+    <h2>Métriques</h2>
+    <pre>{}</pre>
+    '''.format(json.dumps(metrics, indent=4))
+
+    plots = [
+        'loss_curve.png',
+        'confusion_matrix.png',
+        'normalized_confusion_matrix.png',
+        'precision_recall_curves.png'
+    ]
+
+    # Construire le contenu HTML
+    html_content = f"""
+    <html>
+    <head>
+        <title>Rapport d'Évaluation du Modèle</title>
+    </head>
+    <body>
+        <h1>Rapport d'Évaluation du Modèle</h1>
+        {metrics_html}
+    """
+
+    for plot in plots:
+        if os.path.exists(os.path.join(output_dir, plot)):
+            html_content += f"""
+            <h2>{plot.replace('_', ' ').title()}</h2>
+            <img src="{plot}" alt="{plot}" style="max-width:100%; height:auto;">
+            """
+
+    html_content += """
+    </body>
+    </html>
+    """
+
+    # Sauvegarder le rapport HTML
+    with open(os.path.join(output_dir, 'report.html'), 'w') as f:
+        f.write(html_content)
+    print(f"Rapport HTML sauvegardé dans {os.path.join(output_dir, 'report.html')}")
+
+def log_artifact_to_wandb(artifact_name, artifact_type, artifact_dir):
+    """
+    Log un artefact (modèle, données, visualisations) dans W&B.
+    """
+    artifact = wandb.Artifact(artifact_name, type=artifact_type)
+    artifact.add_dir(artifact_dir)
+    wandb.log_artifact(artifact)
+
+def get_latest_model_dir(model_versions_dir):
+    subdirs = [
+        os.path.join(model_versions_dir, d) for d in os.listdir(model_versions_dir)
+        if os.path.isdir(os.path.join(model_versions_dir, d))
+    ]
+    if not subdirs:
+        raise Exception(f"Aucun dossier de modèle trouvé dans {model_versions_dir}")
+    latest_subdir = max(subdirs, key=os.path.getmtime)
+    return latest_subdir
+
 
 
 
