@@ -1,9 +1,9 @@
-name: MLOps
+name: MLOps DEV with Vertex AI
 
 on:
   push:
     branches:
-      - dev
+      - dev_testing
 
 jobs:
   train:

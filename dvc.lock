@@ -38,7 +38,7 @@ stages:
           epochs: 2
           batch_size: 2
           num_classes: 2
-          num_folds: 5
+          num_folds: 2
     outs:
     - path: data/prepared
       hash: md5
@@ -67,12 +67,12 @@ stages:
           epochs: 2
           batch_size: 2
           num_classes: 2
-          num_folds: 5
+          num_folds: 2
     outs:
     - path: model_versions
       hash: md5
-      md5: 195f55c49e948203b22eeae61d31e262.dir
-      size: 31264192
+      md5: 3fa26edcf00ee439b7ddeff85619524b.dir
+      size: 31249373
       nfiles: 5
   evaluate:
     cmd: python evaluate.py model_versions data/prepared evaluation_outputs
@@ -88,23 +88,23 @@ stages:
       size: 7897
     - path: model_versions
       hash: md5
-      md5: 195f55c49e948203b22eeae61d31e262.dir
-      size: 31264192
+      md5: 3fa26edcf00ee439b7ddeff85619524b.dir
+      size: 31249373
       nfiles: 5
     outs:
     - path: evaluation_outputs/confusion_matrix.png
       hash: md5
-      md5: 54a0a7cff006c62fccf7f758b5f7340c
-      size: 24606
+      md5: 6e6a079dd605d5c0484800b0f86cd3e1
+      size: 24568
     - path: evaluation_outputs/loss_curve.png
       hash: md5
-      md5: f215c7bf66cf05f2d552647c18fdc3f6
-      size: 32019
+      md5: 1c85186a02fba38c9567e4dee90e814f
+      size: 21032
     - path: evaluation_outputs/metrics.json
       hash: md5
-      md5: b91473ded05aca95d0f72edad925e3f7
-      size: 1054
+      md5: 460e72d6497c9aaf20c3daec3fe17096
+      size: 877
     - path: evaluation_outputs/normalized_confusion_matrix.png
       hash: md5
-      md5: ad0657b795752e65da42e35c17c3af20
-      size: 28094
+      md5: 9d4bdea5e7b61d41dfb02154d3fadd04
+      size: 27979
