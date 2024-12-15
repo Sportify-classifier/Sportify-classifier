@@ -52,4 +52,4 @@ RUN dvc remote list
 RUN dvc pull
 
 # Le CMD lance finalement le repro (les données sont déjà en cache grâce à dvc pull)
-CMD ["bash", "-c", "echo 'Running pipeline...' && pwd && ls -la && dvc repro && echo 'Pipeline finished.' && bash"]
+CMD ["bash", "-c", "echo 'Running pipeline...' && pwd && ls -la && ls data && dvc repro && echo 'Pipeline finished.' && bash"]
