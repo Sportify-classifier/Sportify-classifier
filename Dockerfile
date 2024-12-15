@@ -37,11 +37,11 @@ RUN pip install --no-cache-dir -r requirements.txt dvc[gcs]
 RUN wandb login ${WANDB_KEY}
 
 # Décoder la clé de service GCP et l'utiliser
-RUN echo "${_SERVICE_ACCOUNT_KEY}" | base64 -d > /app/service-account-key2.json
-RUN cat /app/service-account-key2.json | jq .
+# RUN echo "${_SERVICE_ACCOUNT_KEY}" | base64 -d > /app/service-account-key2.json
+# RUN cat /app/service-account-key2.json | jq .
 
-ENV GOOGLE_APPLICATION_CREDENTIALS="/app/service-account-key2.json"
-RUN gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
+# ENV GOOGLE_APPLICATION_CREDENTIALS="/app/service-account-key.json"
+RUN gcloud auth activate-service-account --key-file="/app/service-account-key.json"
 
 # Vérifier l'accès au bucket GCS
 RUN gsutil ls gs://sportify_classifier_secondbucket || echo "GCS access failed, ensure credentials and permissions are correct"

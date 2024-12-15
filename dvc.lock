@@ -36,12 +36,41 @@ stages:
           seed: 42
           lr: 0.0006
           epochs: 4
-          batch_size: 16
-          num_classes: 20
-          num_folds: 5
+          batch_size: 1
+          num_classes: 2
+          num_folds: 2
     outs:
     - path: data/prepared
       hash: md5
-      md5: a0b51e9ff38aea04b08c23bc816ea18a.dir
-      size: 53350941
-      nfiles: 2040
+      md5: f43e98b9f95cfe5b9816fabb4542527b.dir
+      size: 5741625
+      nfiles: 204
+  train:
+    cmd: python train.py data/prepared model_versions
+    deps:
+    - path: data/prepared
+      hash: md5
+      md5: f43e98b9f95cfe5b9816fabb4542527b.dir
+      size: 5741625
+      nfiles: 204
+    - path: train.py
+      hash: md5
+      md5: 024bb75e3ccfacb287b09ac0bd204123
+      size: 6782
+    params:
+      params.yaml:
+        model:
+          name: google/efficientnet-b0
+        train:
+          seed: 42
+          lr: 0.0006
+          epochs: 4
+          batch_size: 1
+          num_classes: 2
+          num_folds: 2
+    outs:
+    - path: model_versions
+      hash: md5
+      md5: 51ace92c67e7565e3c38c869d8545bef.dir
+      size: 31259983
+      nfiles: 5

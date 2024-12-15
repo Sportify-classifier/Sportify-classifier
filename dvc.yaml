@@ -4,12 +4,12 @@ stages:
     deps:
       - data/all_data
       - data_loader.py
-    outs:
-      - data/prepared
     params:
       - prepare
       - data
       - train
+    outs:
+      - data/prepared
 
   train:
     cmd: python train.py data/prepared model_versions
@@ -19,6 +19,8 @@ stages:
     params:
       - train
       - model
+    outs:
+      - model_versions
 
   evaluate:
     cmd: python evaluate.py model_versions data/prepared evaluation_outputs
@@ -26,3 +28,10 @@ stages:
       - data/prepared
       - evaluate.py
       - model_versions
+    metrics:
+      - evaluation_outputs/metrics.json
+    plots:
+      - evaluation_outputs/loss_curve.png
+      - evaluation_outputs/confusion_matrix.png
+      - evaluation_outputs/normalized_confusion_matrix.png
+      - evaluation_outputs/precision_recall_curves.png

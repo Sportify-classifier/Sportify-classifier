@@ -19,9 +19,9 @@ train:
   seed: 42
   lr: 0.0006
   epochs: 4
-  batch_size: 16
-  num_classes: 20 # minimum 1 jusqu'à 100 (soustraire excluded_classes)
-  num_folds: 5 # minimum 2 sinon erreur (cross-validation)
+  batch_size: 1
+  num_classes: 2 # minimum 2 jusqu'à 100 (soustraire excluded_classes)
+  num_folds: 2 # minimum 2 sinon erreur (cross-validation)
 
 model:
   name: google/efficientnet-b0
