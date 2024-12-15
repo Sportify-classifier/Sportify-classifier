@@ -13,6 +13,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     gnupg \
     jq \
+    curl \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Ajouter la clé GPG de Google Cloud
@@ -36,8 +38,6 @@ RUN pip install --no-cache-dir -r requirements.txt dvc[gcs]
 # Installer wandb et se connecter
 RUN wandb login ${WANDB_KEY}
 
-COPY data/all_data /app/data
-
 # Décoder la clé de service GCP et l'utiliser
 RUN echo "${_SERVICE_ACCOUNT_KEY}" | base64 -d > /app/service-account-key2.json
 RUN cat /app/service-account-key2.json | jq .
@@ -52,7 +52,11 @@ RUN gsutil ls gs://sportify_classifier || echo "GCS access failed, ensure creden
 RUN dvc remote list
 
 # Effectuer un dvc pull pour récupérer les données
-RUN dvc pull
+# Au lieu de dvc pull, on télécharge et dézippe le contenu dans /app/data/CONTENUE_DU_ZIP
+RUN mkdir -p /app/data \
+    && curl -L -o data.zip "https://dl-cg6b4xma.swisstransfer.com/api/download/6fc730c8-6d29-42e7-8dfc-67599d30549c/85b19828-3739-4b0f-a397-a9f938227178" \
+    && unzip data.zip -d /app/data \
+    && rm data.zip
 
 # Le CMD lance finalement le repro (les données sont déjà en cache grâce à dvc pull)
 CMD ["bash", "-c", "echo 'Running pipeline...' && pwd && ls -la && ls data && dvc repro && echo 'Pipeline finished.' && bash"]
