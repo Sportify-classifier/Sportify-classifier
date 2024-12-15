@@ -23,7 +23,10 @@ jobs:
           python-version: 3.12
       
       - name: Install Dependencies
-        run: pip install --no-cache-dir -r requirements.txt
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install -r requirements.txt
 
       # Check the connect to gcloud, but unfortunately, we didn't find the solution to put a secret.
       - name: Activate Service Account
@@ -38,92 +41,32 @@ jobs:
       - name: Configure gcloud
         run: gcloud config set project modern-bond-303506
 
-      # Check the connection to the GCS bucket
-      # - name: Check GCS Bucket Access
-      #   run: |
-      #     echo "Testing GCS access..."
-      #     gsutil ls gs://sportify_classifier || echo "Bucket access failed, ensure credentials and permissions are correct"
-
-      # Used to transform the service account key into base64 (to keep the json format in the cloudbuild.yaml -> dockerfile)
-      # - name: Install jq
-      #   run: sudo apt-get update && sudo apt-get install -y jq
-
-      # - name: Check service account key JSON
-      #   run: cat service-account-key.json | jq .
-
-      # Build and push the docker image to GCR
-      # - name: Build and push Docker image
-      #   run: |
-      #     echo "Building Docker image and pushing to GCR..."
-      #     SERVICE_ACCOUNT_KEY_BASE64=$(cat service-account-key.json | base64 -w 0)
-      #     gcloud builds submit . \
-      #       --config=cloudbuild.yaml \
-      #       --substitutions=_GIT_KEY=$GIT_KEY,_WANDB_KEY=$WANDB_KEY,_SERVICE_ACCOUNT_KEY=$SERVICE_ACCOUNT_KEY_BASE64
-
-      # # Launch the Vertex AI job
-      # - name: Launch Vertex AI job
-      #   id: launch_job
-      #   run: |
-      #     echo "Launching Vertex AI Job..."
-      #     JOB_ID=$(gcloud ai custom-jobs create \
-      #     --region=europe-west1 \
-      #     --display-name="entraînement-mlops" \
-      #     --worker-pool-spec=machine-type=n1-standard-4,container-image-uri=gcr.io/modern-bond-303506/train_image:latest \
-      #     --service-account=sportify-classier@modern-bond-303506.iam.gserviceaccount.com \
-      #     --format='value(name)')
-      #     echo "Vertex AI Job ID: $JOB_ID"
-      #     echo "JOB_ID=$JOB_ID" >> $GITHUB_ENV
-
-      # - name: Wait for job to finish
-      #   run: |
-      #     echo "Waiting for Vertex AI Job to finish..."
-      #     STATUS=$(gcloud ai custom-jobs describe "${JOB_ID}" --region=us-central1 --format='value(state)')
-      #     MAX_RETRIES=60
-      #     COUNT=0
-      #     while [ "$STATUS" != "JOB_STATE_SUCCEEDED" ] && [ "$STATUS" != "JOB_STATE_FAILED" ] && [ $COUNT -lt $MAX_RETRIES ]; do
-      #       echo "Job status: $STATUS"
-      #       echo "Fetching logs for Job ID: ${JOB_ID}..."
-      #       gcloud logging read "resource.type=ml_job AND resource.labels.job_id=\"${JOB_ID}\"" --limit=50 --format="value(textPayload)"
-      #       sleep 30
-      #       STATUS=$(gcloud ai custom-jobs describe "${JOB_ID}" --region=us-central1 --format='value(state)')
-      #       COUNT=$((COUNT + 1))
-      #     done
-
-      #     echo "Final job status: $STATUS"
-      #     if [ "$STATUS" = "JOB_STATE_FAILED" ]; then
-      #       echo "Fetching detailed logs for failure..."
-      #       gcloud logging read "resource.type=ml_job AND resource.labels.job_id=\"${JOB_ID}\"" --limit=100 --format="value(textPayload)"
-      #       exit 1
-      #     elif [ $COUNT -ge $MAX_RETRIES ]; then
-      #       echo "Job did not finish within the expected time."
-      #       exit 1
-      #     fi
-      #   env:
-      #     JOB_ID: ${{ env.JOB_ID }}
-
       - name: Set up the project With DVC
         run: dvc repro --pull
 
-      # Configure Docker authentication for Artifact Registry
+      - name: Import BentoML Model
+        run: |
+          mkdir -p models
+          dvc pull model/sports_classifier_model.bentomodel
+          bentoml models import model/sports_classifier_model.bentomodel
+
+      - name: Validate BentoML Models
+        run: bentoml models list
+
       - name: Authenticate Docker to Artifact Registry
         run: gcloud auth configure-docker europe-west6-docker.pkg.dev
 
-      # Build the Docker container using BentoML
       - name: Build BentoML Container
         run: |
           bentoml build .
-          bentoml containerize sports_classifier_service:latest --image-tag sports-classifier:latest
-
-      # Tag and push the Docker image to Artifact Registry
-      - name: Tag Docker Image
-        run: |
-          docker tag sports-classifier:latest europe-west6-docker.pkg.dev/modern-bond-303506/mlops-sportify-classifier/sports-classifier:latest
+          bentoml containerize sports_classifier_service:latest \
+            --image-tag europe-west6-docker.pkg.dev/modern-bond-303506/mlops-sportify-classifier/sports-classifier:latest \
+            --image-tag europe-west6-docker.pkg.dev/modern-bond-303506/mlops-sportify-classifier/sports-classifier:${{ github.sha }}
 
       - name: Push Docker Image to Artifact Registry
         run: |
-          docker push europe-west6-docker.pkg.dev/modern-bond-303506/mlops-sportify-classifier/sports-classifier:latest
+          docker push --all-tags europe-west6-docker.pkg.dev/modern-bond-303506/mlops-sportify-classifier/sports-classifier
 
-      # Deploy to Google Cloud Run
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy sports-classifier-service \
