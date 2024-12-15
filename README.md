@@ -35,9 +35,9 @@ This project aims to deploy and continuously improve a sports image recognition 
 ---
 
 ## ** Warning **
-On a eu des problèmes avec google vertex AI pour l'entrainement de notre modèle. L'entrainement fonctionnait mais pour une raison inconnue, google vertex ne voulait plus accepté la commande "dvc pull". Nous avons donc décidé de passer par le github runner à la dernière minute pour rendre quelque chose de fonctionelle.
+We encountered issues with Google Vertex AI for training our model. The training was working, but for some unknown reason, Google Vertex stopped accepting the dvc pull command. Therefore, we decided to switch to GitHub Runner at the last minute to deliver a functional solution.
 
-
+The relevant file is .github/workflows/mlops_training_with_vertex.yaml, which is no longer used and has been replaced by .github/workflows/mlops_dev_training.yaml.
 ## **Setup Instructions**
 
 ### **1. Create and Activate a Virtual Environment**
