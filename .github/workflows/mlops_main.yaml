@@ -67,8 +67,7 @@ jobs:
 
       - name: Build BentoML Container
         run: |
-          pip install bentoml==1.3.16
-          bentoml build .
+          bentoml build --bentofile bentofile.yaml
           bentoml containerize sports_classifier_service:latest \
             --image-tag europe-west6-docker.pkg.dev/modern-bond-303506/mlops-sportify-classifier/sports-classifier:latest \
             --image-tag europe-west6-docker.pkg.dev/modern-bond-303506/mlops-sportify-classifier/sports-classifier:${{ github.sha }}
