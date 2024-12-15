@@ -44,12 +44,7 @@ ENV GOOGLE_APPLICATION_CREDENTIALS="/app/service-account-key2.json"
 RUN gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
 
 # Vérifier l'accès au bucket GCS
-RUN gsutil ls gs://sportify_classifier || echo "GCS access failed, ensure credentials and permissions are correct"
-
-# Vérifier le remote
-RUN dvc remote list
-
-RUN dvc pull -v
+RUN gsutil ls gs://sportify_classifier_secondbucket || echo "GCS access failed, ensure credentials and permissions are correct"
 
 # Le CMD lance finalement le repro (les données sont déjà en cache grâce à dvc pull)
-CMD ["bash", "-c", "echo 'Running pipeline...' && pwd && ls -la && ls data && dvc repro && echo 'Pipeline finished.' && bash"]
+CMD ["bash", "-c", "echo 'Running pipeline...' && pwd && ls -la && ls data && dvc repro --pull && echo 'Pipeline finished.' && bash"]

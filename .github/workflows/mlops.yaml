@@ -33,7 +33,7 @@ jobs:
       - name: Check GCS Bucket Access
         run: |
           echo "Testing GCS access..."
-          gsutil ls gs://sportify_classifier || echo "Bucket access failed, ensure credentials and permissions are correct"
+          gsutil ls gs://sportify_classifier_secondbucket || echo "Bucket access failed, ensure credentials and permissions are correct"
 
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
