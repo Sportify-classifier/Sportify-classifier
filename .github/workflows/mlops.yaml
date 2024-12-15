@@ -17,6 +17,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Activer le compte de service avec le fichier service-account-key.json (assurez-vous que ce fichier existe dans le dépôt)
       - name: Activate Service Account
         run: |
           gcloud auth activate-service-account --key-file="service-account-key.json"
@@ -24,9 +25,11 @@ jobs:
       - name: List files in context
         run: ls -la
 
+      # Configurer le projet GCP
       - name: Configure gcloud
         run: gcloud config set project modern-bond-303506
 
+      # Vérifier les permissions sur le bucket GCS
       - name: Check GCS Bucket Access
         run: |
           echo "Testing GCS access..."
@@ -35,19 +38,19 @@ jobs:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
+      # Vérifier le contenu du fichier de clé de service
       - name: Check service account key JSON
         run: cat service-account-key.json | jq .
 
-      # Construire et pousser l'image Docker via Cloud Build
+      # Construire et pousser l'image Docker via Cloud Build en passant les substitutions
       - name: Build and push Docker image
         run: |
           echo "Building Docker image and pushing to GCR..."
-          # Encoder la clé de service en base64
-          SERVICE_ACCOUNT_KEY_BASE64=$(cat service-account-key.json | base64 -w 0)
           gcloud builds submit . \
             --config=cloudbuild.yaml \
-            --substitutions=_GIT_KEY=$GIT_KEY,_WANDB_KEY=$WANDB_KEY,_SERVICE_ACCOUNT_KEY=$SERVICE_ACCOUNT_KEY_BASE64
+            --substitutions=_GIT_KEY=$GIT_KEY,_WANDB_KEY=$WANDB_KEY,_SERVICE_ACCOUNT_KEY=$GOOGLE_SERVICE_ACCOUNT_KEY
 
+      # Lancer le job Vertex AI
       - name: Launch Vertex AI job
         id: launch_job
         run: |
@@ -61,11 +64,12 @@ jobs:
           echo "Vertex AI Job ID: $JOB_ID"
           echo "JOB_ID=$JOB_ID" >> $GITHUB_ENV
 
+      # Attendre la fin du job Vertex AI
       - name: Wait for job to finish
         run: |
           echo "Waiting for Vertex AI Job to finish..."
           STATUS=$(gcloud ai custom-jobs describe "${JOB_ID}" --region=us-central1 --format='value(state)')
-          MAX_RETRIES=60
+          MAX_RETRIES=60 
           COUNT=0
           while [ "$STATUS" != "JOB_STATE_SUCCEEDED" ] && [ "$STATUS" != "JOB_STATE_FAILED" ] && [ $COUNT -lt $MAX_RETRIES ]; do
             echo "Job status: $STATUS"
@@ -88,6 +92,7 @@ jobs:
         env:
           JOB_ID: ${{ env.JOB_ID }}
 
+      # Récupérer les résultats depuis GCS
       - name: Pull evaluation_output from GCS
         run: |
           echo "Ensuring local evaluation_output directory exists..."
@@ -97,6 +102,7 @@ jobs:
           echo "Listing downloaded files..."
           ls -la ./evaluation_output
 
+      # Créer une Pull Request pour fusionner `dev` dans `main`
       - name: Create Pull Request to main
         uses: peter-evans/create-pull-request@v5
         with:
