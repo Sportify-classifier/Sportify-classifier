@@ -49,5 +49,7 @@ RUN gsutil ls gs://sportify_classifier || echo "GCS access failed, ensure creden
 # Vérifier le remote
 RUN dvc remote list
 
+RUN dvc pull -v
+
 # Le CMD lance finalement le repro (les données sont déjà en cache grâce à dvc pull)
-CMD ["bash", "-c", "echo 'Running pipeline...' && pwd && ls -la && ls data && dvc repro --pull && echo 'Pipeline finished.' && bash"]
+CMD ["bash", "-c", "echo 'Running pipeline...' && pwd && ls -la && ls data && dvc repro && echo 'Pipeline finished.' && bash"]
