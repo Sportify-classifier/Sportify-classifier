@@ -17,7 +17,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Créer la Pull Request vers main
+      # Créer la Pull Request vers main2
       - name: Create Pull Request to main
         uses: peter-evans/create-pull-request@v5
         with:
