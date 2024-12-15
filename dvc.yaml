@@ -8,8 +8,6 @@ stages:
       - prepare
       - data
       - train
-    outs:
-      - data/prepared
 
   train:
     cmd: python train.py data/prepared model_versions
@@ -19,8 +17,6 @@ stages:
     params:
       - train
       - model
-    outs:
-      - model_versions
 
   evaluate:
     cmd: python evaluate.py model_versions data/prepared evaluation_outputs
@@ -28,5 +24,3 @@ stages:
       - data/prepared
       - evaluate.py
       - model_versions
-    outs:
-      - evaluation_outputs
