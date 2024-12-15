@@ -23,7 +23,8 @@ RUN git clone --branch dev https://${GIT_KEY}@github.com/Sportify-classifier/Spo
 RUN pip install --no-cache-dir -r requirements.txt
 RUN echo "${_SERVICE_ACCOUNT_KEY}" | base64 -d > /app/service-account-key2.json
 RUN cat /app/service-account-key2.json | jq .
-ENV GOOGLE_APPLICATION_CREDENTIALS="/app/service-account-key2.json"
+# Définir la variable d'environnement pour Google Cloud
+ENV GOOGLE_APPLICATION_CREDENTIALS="/app/service-account-key.json"
 # Activer le compte de service
 RUN gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
 # Vérifier l'accès à GCS
