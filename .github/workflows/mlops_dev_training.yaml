@@ -29,6 +29,7 @@ jobs:
           body: |
             [Compare les modèles sur Weights & Biases](https://wandb.ai/sportify/sports-classification)
             Veuillez examiner les résultats générés par la branche `dev`.
+          auto-merge: false
       #- name: Set up Python
       #  uses: actions/setup-python@v2
       #  with:
