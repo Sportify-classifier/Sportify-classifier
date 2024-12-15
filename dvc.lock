@@ -5,13 +5,13 @@ stages:
     deps:
     - path: data/all_data
       hash: md5
-      md5: cec9c03ade7ae449c4cfcd28bee30ecc.dir
-      size: 375855134
-      nfiles: 14492
+      md5: d9136130f3edf731ea7d5bf558c20bd7.dir
+      size: 375986530
+      nfiles: 14493
     - path: data_loader.py
       hash: md5
-      md5: e4ff74eb3be0a946f9fb14f1ab247078
-      size: 1995
+      md5: 3df803cbda8ed12e142fcc26f7ebf8ed
+      size: 1945
     params:
       params.yaml:
         data:
@@ -20,7 +20,7 @@ stages:
           seed: 42
           split: 0.3
           image_size: 224
-          sample_fraction: 0.19
+          sample_fraction: 0.85
           excluded_classes:
           - sky surfing
           - ultimate
@@ -36,27 +36,27 @@ stages:
           seed: 42
           lr: 0.0006
           epochs: 2
-          batch_size: 16
-          num_classes: 10
+          batch_size: 2
+          num_classes: 2
           num_folds: 2
     outs:
     - path: data/prepared
       hash: md5
-      md5: 04f1d437c7d0682bc14e37ab6e55e161.dir
-      size: 6012495
-      nfiles: 220
+      md5: f43e98b9f95cfe5b9816fabb4542527b.dir
+      size: 5741625
+      nfiles: 204
   train:
     cmd: python train.py data/prepared model_versions
     deps:
     - path: data/prepared
       hash: md5
-      md5: 04f1d437c7d0682bc14e37ab6e55e161.dir
-      size: 6012495
-      nfiles: 220
+      md5: f43e98b9f95cfe5b9816fabb4542527b.dir
+      size: 5741625
+      nfiles: 204
     - path: train.py
       hash: md5
-      md5: cb23105ab38193d0f75a00145fb6dd74
-      size: 6990
+      md5: 024bb75e3ccfacb287b09ac0bd204123
+      size: 6782
     params:
       params.yaml:
         model:
@@ -65,50 +65,46 @@ stages:
           seed: 42
           lr: 0.0006
           epochs: 2
-          batch_size: 16
-          num_classes: 10
+          batch_size: 2
+          num_classes: 2
           num_folds: 2
     outs:
     - path: model_versions
       hash: md5
-      md5: e483960aa7fad1ccecb13607d23b3cde.dir
-      size: 31332670
+      md5: 3fa26edcf00ee439b7ddeff85619524b.dir
+      size: 31249373
       nfiles: 5
   evaluate:
     cmd: python evaluate.py model_versions data/prepared evaluation_outputs
     deps:
     - path: data/prepared
       hash: md5
-      md5: 04f1d437c7d0682bc14e37ab6e55e161.dir
-      size: 6012495
-      nfiles: 220
+      md5: f43e98b9f95cfe5b9816fabb4542527b.dir
+      size: 5741625
+      nfiles: 204
     - path: evaluate.py
       hash: md5
-      md5: 036680def3579c1c2995b2104f8872a1
-      size: 8321
+      md5: ddc3c5f32d613da9232c99f612f4260d
+      size: 7897
     - path: model_versions
       hash: md5
-      md5: e483960aa7fad1ccecb13607d23b3cde.dir
-      size: 31332670
+      md5: 3fa26edcf00ee439b7ddeff85619524b.dir
+      size: 31249373
       nfiles: 5
     outs:
     - path: evaluation_outputs/confusion_matrix.png
       hash: md5
-      md5: 8cc9c58a2a6cf7a5c9719164b5c83a1c
-      size: 47291
+      md5: 6e6a079dd605d5c0484800b0f86cd3e1
+      size: 24568
     - path: evaluation_outputs/loss_curve.png
       hash: md5
-      md5: 499044ee178045be03c0a7d3b84e3654
-      size: 25569
+      md5: 1c85186a02fba38c9567e4dee90e814f
+      size: 21032
     - path: evaluation_outputs/metrics.json
       hash: md5
-      md5: fa30b6256a29d39924d8a5c0936ad42e
-      size: 2374
+      md5: 460e72d6497c9aaf20c3daec3fe17096
+      size: 877
     - path: evaluation_outputs/normalized_confusion_matrix.png
       hash: md5
-      md5: 61cc579129767634b606b5c7972923d9
-      size: 62435
-    - path: evaluation_outputs/precision_recall_curves.png
-      hash: md5
-      md5: ccb9576fd493fc4fc75f9e4ff64bed1c
-      size: 44358
+      md5: 9d4bdea5e7b61d41dfb02154d3fadd04
+      size: 27979

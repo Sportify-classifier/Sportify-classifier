@@ -34,4 +34,3 @@ stages:
       - evaluation_outputs/loss_curve.png
       - evaluation_outputs/confusion_matrix.png
       - evaluation_outputs/normalized_confusion_matrix.png
-      - evaluation_outputs/precision_recall_curves.png

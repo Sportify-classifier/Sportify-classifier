@@ -287,24 +287,6 @@ def update_wandb_tags(project_name, current_run_id, is_best_model):
     except Exception as e:
         print(f"Erreur lors de la mise à jour des tags dans W&B : {str(e)}")
 
-def plot_precision_recall_curves(all_labels, all_predictions, classes, output_dir):
-    y_test = label_binarize(all_labels, classes=range(len(classes)))
-    y_score = label_binarize(all_predictions, classes=range(len(classes)))
-
-    plt.figure(figsize=(10, 8))
-    for i in range(len(classes)):
-        precision, recall, _ = precision_recall_curve(y_test[:, i], y_score[:, i])
-        average_precision = average_precision_score(y_test[:, i], y_score[:, i])
-        plt.step(recall, precision, where='post', label=f'{classes[i]} (AP={average_precision:.2f})')
-
-    plt.xlabel('Recall')
-    plt.ylabel('Precision')
-    plt.title('Courbe Precision-Recall')
-    plt.legend()
-    plt.savefig(os.path.join(output_dir, 'precision_recall_curves.png'))
-    plt.close()
-    print(f"Courbes Precision-Recall sauvegardées dans {os.path.join(output_dir, 'precision_recall_curves.png')}")
-
 def log_class_metrics_to_wandb(classif_report, classes):
     """
     Log precision, recall, and F1-score as bar charts to W&B.
@@ -334,7 +316,6 @@ def generate_html_report(metrics, output_dir):
         'loss_curve.png',
         'confusion_matrix.png',
         'normalized_confusion_matrix.png',
-        'precision_recall_curves.png'
     ]
 
     # Construire le contenu HTML
