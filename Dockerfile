@@ -21,12 +21,10 @@ WORKDIR /app
 RUN echo "GIT_KEY is: ${GIT_KEY}"
 RUN git clone --branch dev https://${GIT_KEY}@github.com/Sportify-classifier/Sportify-classifier.git /app
 RUN pip install --no-cache-dir -r requirements.txt
-RUN echo "${_SERVICE_ACCOUNT_KEY}" | base64 -d > /app/service-account-key2.json
-RUN cat /app/service-account-key2.json | jq .
-# Définir la variable d'environnement pour Google Cloud
-ENV GOOGLE_APPLICATION_CREDENTIALS="/app/service-account-key.json"
+# RUN echo "${_SERVICE_ACCOUNT_KEY}" | base64 -d > /app/service-account-key2.json
+# RUN cat /app/service-account-key2.json | jq .
 # Activer le compte de service
-RUN gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENTIALS"
+RUN gcloud auth activate-service-account --key-file="/app/service-account-key.json"
 # Vérifier l'accès à GCS
 RUN gsutil ls gs://sportify_classifier || echo "GCS access failed, ensure credentials and permissions are correct"
 # Log to Weights & Biases
