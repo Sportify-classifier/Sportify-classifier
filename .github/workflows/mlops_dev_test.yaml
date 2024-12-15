@@ -1,4 +1,4 @@
-name: MLOps Main
+name: MLOps DEV
 
 on:
   push:

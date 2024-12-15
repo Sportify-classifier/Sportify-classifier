@@ -24,7 +24,6 @@ from utils import (
     SportsDataset,
     create_versioned_dir,
     update_best_accuracy,
-    plot_precision_recall_curves,
     log_class_metrics_to_wandb,
     generate_html_report,
     log_artifact_to_wandb,
@@ -144,9 +143,6 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
     plt.close()
     print(f"Matrice de confusion normalisée sauvegardée dans {os.path.join(output_dir, 'normalized_confusion_matrix.png')}")
 
-    # Courbes Precision-Recall
-    plot_precision_recall_curves(all_labels, all_predictions, test_dataset.classes, output_dir)
-
     # Ajouter les tags W&B
     wandb_tags = ["last_evaluation"]
     if is_best_model:
@@ -192,7 +188,6 @@ def evaluate_model(model_dir, data_dir, evaluation_versions_dir):
         'loss_curve.png',
         'confusion_matrix.png',
         'normalized_confusion_matrix.png',
-        'precision_recall_curves.png',
         'report.html'
     ]
     from shutil import copyfile
