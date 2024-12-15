@@ -1,4 +1,4 @@
 [core]
-    remote = dataset_remote
-['remote "dataset_remote"']
-    url = gs://sportify_classifier/datasets
+    remote = remote_data
+['remote "remote_data"']
+    url = gs://sportify_classifier_secondbucket/dataset

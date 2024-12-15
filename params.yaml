@@ -10,10 +10,10 @@ prepare:
 train:
   seed: 42
   lr: 0.005
-  epochs: 3
+  epochs: 1
   batch_size: 16
   num_classes: 10
-  num_folds: 3 #minimum 2
+  num_folds: 2 #minimum 2
 
 model:
   name: google/efficientnet-b0

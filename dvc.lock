@@ -27,10 +27,10 @@ stages:
         train:
           seed: 42
           lr: 0.005
-          epochs: 2
+          epochs: 1
           batch_size: 16
           num_classes: 10
-          num_folds: 3
+          num_folds: 2
     outs:
     - path: data/prepared
       hash: md5
@@ -56,15 +56,15 @@ stages:
         train:
           seed: 42
           lr: 0.005
-          epochs: 2
+          epochs: 1
           batch_size: 16
           num_classes: 10
-          num_folds: 3
+          num_folds: 2
     outs:
     - path: model_versions
       hash: md5
-      md5: b32f05d3d1ba21bf275aae5918caab8f.dir
-      size: 31324062
+      md5: 2708e19dd515836c63c5156743d2cf61.dir
+      size: 31314154
       nfiles: 5
   evaluate:
     cmd: python evaluate.py model_versions data/prepared evaluation_outputs
@@ -80,27 +80,27 @@ stages:
       size: 11372
     - path: model_versions
       hash: md5
-      md5: b32f05d3d1ba21bf275aae5918caab8f.dir
-      size: 31324062
+      md5: 2708e19dd515836c63c5156743d2cf61.dir
+      size: 31314154
       nfiles: 5
     outs:
     - path: evaluation_outputs/confusion_matrix.png
       hash: md5
-      md5: 0ae37de07a9ab51b2a269fbe7f440ab6
-      size: 50074
+      md5: 18c2b571b0e6b39baaf45c2c64017ffb
+      size: 49684
     - path: evaluation_outputs/loss_curve.png
       hash: md5
-      md5: 5547e68d09246513934aa308fbe083e8
-      size: 24325
+      md5: 58c9d09c020885e2432ce546ecbe109f
+      size: 17841
     - path: evaluation_outputs/metrics.json
       hash: md5
-      md5: d54131589722b080b66b0fd6616e59c2
-      size: 2272
+      md5: 4c800d259c197dcc8dce0fdc78290ab5
+      size: 2267
     - path: evaluation_outputs/normalized_confusion_matrix.png
       hash: md5
-      md5: 4586c9fcdfa3933101179375e311cbd5
-      size: 66400
+      md5: 4a80da0a6ae8d12d7c2c2c4ab4127261
+      size: 66334
     - path: evaluation_outputs/precision_recall_curves.png
       hash: md5
-      md5: 9de2e9512cac3744bf338c63db573bcc
-      size: 46386
+      md5: f4f51251bd69569704eee364e2354949
+      size: 45760
