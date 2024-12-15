@@ -21,7 +21,7 @@ jobs:
       - name: Create Pull Request to main
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.SECRET }}
+          token: ${{ secrets.GIT_TOKEN }}
           commit-message: "Automated results from dev branch"
           branch: dev
           base: main
@@ -29,7 +29,6 @@ jobs:
           body: |
             [Compare les modèles sur Weights & Biases](https://wandb.ai/sportify/sports-classification)
             Veuillez examiner les résultats générés par la branche `dev`.
-
       #- name: Set up Python
       #  uses: actions/setup-python@v2
       #  with:
