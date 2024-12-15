@@ -35,7 +35,8 @@ This project aims to deploy and continuously improve a sports image recognition 
 ---
 
 ## ** Warning **
-On a eu des problèmes avec google vertex AI pour l'entrainement de notre modèle. L'entrainement fonctionnait mais pour une raison inconnue, google vertex ne voulait plus accepté le 
+On a eu des problèmes avec google vertex AI pour l'entrainement de notre modèle. L'entrainement fonctionnait mais pour une raison inconnue, google vertex ne voulait plus accepté la commande "dvc pull". Nous avons donc décidé de passer par le github runner à la dernière minute pour rendre quelque chose de fonctionelle.
+
 
 ## **Setup Instructions**
 
