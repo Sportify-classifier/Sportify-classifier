@@ -51,11 +51,11 @@ RUN gsutil ls gs://sportify_classifier || echo "GCS access failed, ensure creden
 # Vérifier le remote
 RUN dvc remote list
 
-# Effectuer un dvc pull pour récupérer les données
+# Télécharger les données
 RUN mkdir -p /app/data \
     && curl -L -o data.zip "https://storage.googleapis.com/dataset_sportify/all_data.zip" \
-    && unzip data.zip -d /app/data \
-    && rm data.zip
+    && file data.zip \
+    && cat data.zip \
 
 # Le CMD lance finalement le repro (les données sont déjà en cache grâce à dvc pull)
 CMD ["bash", "-c", "echo 'Running pipeline...' && pwd && ls -la && ls data && dvc repro && echo 'Pipeline finished.' && bash"]
