@@ -28,10 +28,5 @@ stages:
       - data/prepared
       - evaluate.py
       - model_versions
-    metrics:
-      - evaluation_outputs/metrics.json
-    plots:
-      - evaluation_outputs/loss_curve.png
-      - evaluation_outputs/confusion_matrix.png
-      - evaluation_outputs/normalized_confusion_matrix.png
-      - evaluation_outputs/precision_recall_curves.png
+    outs:
+      - evaluation_outputs

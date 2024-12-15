@@ -84,23 +84,8 @@ stages:
       size: 31314154
       nfiles: 5
     outs:
-    - path: evaluation_outputs/confusion_matrix.png
+    - path: evaluation_outputs
       hash: md5
-      md5: 18c2b571b0e6b39baaf45c2c64017ffb
-      size: 49684
-    - path: evaluation_outputs/loss_curve.png
-      hash: md5
-      md5: 58c9d09c020885e2432ce546ecbe109f
-      size: 17841
-    - path: evaluation_outputs/metrics.json
-      hash: md5
-      md5: 4c800d259c197dcc8dce0fdc78290ab5
-      size: 2267
-    - path: evaluation_outputs/normalized_confusion_matrix.png
-      hash: md5
-      md5: 4a80da0a6ae8d12d7c2c2c4ab4127261
-      size: 66334
-    - path: evaluation_outputs/precision_recall_curves.png
-      hash: md5
-      md5: f4f51251bd69569704eee364e2354949
-      size: 45760
+      md5: 3f57cbafc304a3b880df3eb83c3e4540.dir
+      size: 370168
+      nfiles: 12
