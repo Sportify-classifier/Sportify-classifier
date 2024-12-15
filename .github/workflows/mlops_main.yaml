@@ -41,11 +41,13 @@ jobs:
       - name: Set up the project With DVC
         run: dvc repro --pull
 
-      - name: Import BentoML Model
+      - name: Pull the latest BentoML model with DVC
         run: |
-          mkdir -p models
-          dvc pull model/sports_classifier_model.bentomodel
-          bentoml models import model/sports_classifier_model.bentomodel
+          LATEST_MODEL_DIR=$(ls -td model_versions/model_* | head -n 1)
+          echo "Le dernier modèle trouvé est : $LATEST_MODEL_DIR"
+
+          dvc pull $LATEST_MODEL_DIR
+          bentoml models import ${LATEST_MODEL_DIR}/sports_classifier_model.bentomodel
 
       - name: Validate BentoML Models
         run: bentoml models list
