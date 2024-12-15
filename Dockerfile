@@ -29,4 +29,21 @@ RUN gcloud auth activate-service-account --key-file="/app/service-account-key.js
 RUN gsutil ls gs://sportify_classifier || echo "GCS access failed, ensure credentials and permissions are correct"
 # Log to Weights & Biases
 RUN wandb login ${WANDB_KEY}
-CMD ["bash", "-c", "echo 'Running pipeline...' && pwd && ls -la && dvc repro --pull && echo 'Pipeline finished.' && bash"]
+CMD ["bash", "-c", "\
+    echo 'Starting pipeline...'; \
+    echo 'Current directory:'; pwd; \
+    echo 'Listing files:'; ls -la; \
+    echo 'Checking DVC status:'; dvc status; \
+    echo 'Pulling data from DVC remote...'; \
+    dvc pull --verbose || { \
+        echo 'Error: DVC pull failed.'; \
+        echo 'Rechecking DVC status:'; \
+        dvc status; \
+        echo 'Checking DVC remote list:'; \
+        dvc remote list; \
+        echo 'Listing remote content (if accessible):'; \
+        dvc list gs://sportify_classifier || echo 'Failed to access GCS remote'; \
+        exit 1; \
+    }; \
+    echo 'Pipeline finished successfully.'; \
+    bash"]
