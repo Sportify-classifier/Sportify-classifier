@@ -50,8 +50,16 @@ jobs:
           LATEST_MODEL_DIR=$(ls -td model_versions/model_* | head -n 1)
           echo "Le dernier modèle trouvé est : $LATEST_MODEL_DIR"
 
+          # Télécharger les données avec DVC
           dvc pull $LATEST_MODEL_DIR
-          bentoml models import ${LATEST_MODEL_DIR}/sports_classifier_model.bentomodel
+
+          # Vérifier si le modèle est déjà dans le store
+          if ! bentoml models get sports_classifier_model:latest &>/dev/null; then
+              echo "Importation du modèle dans le store BentoML."
+              bentoml models import ${LATEST_MODEL_DIR}/sports_classifier_model.bentomodel
+          else
+              echo "Modèle déjà présent dans le store BentoML. Ignoré."
+          fi
 
       - name: Validate BentoML Models
         run: bentoml models list
