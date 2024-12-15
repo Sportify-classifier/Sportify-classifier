@@ -46,14 +46,14 @@ jobs:
         run: dvc repro --pull
 
       # Créer la Pull Request vers main
-      - name: Create Pull Request to main
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.GIT_TOKEN }}
-          commit-message: "Automated results from dev branch"
-          branch: dev
-          base: main
-          title: "Merge dev into main - Evaluation Results"
-          body: |
-            [Compare les modèles sur Weights & Biases](https://wandb.ai/sportify/sports-classification)
-            Veuillez examiner les résultats générés par la branche `dev`.
+#      - name: Create Pull Request to main
+#        uses: peter-evans/create-pull-request@v5
+#        with:
+#          token: ${{ secrets.GIT_TOKEN }}
+#          commit-message: "Automated results from dev branch"
+#          branch: dev
+#          base: main
+#          title: "Merge dev into main - Evaluation Results"
+#          body: |
+#            [Compare les modèles sur Weights & Biases](https://wandb.ai/sportify/sports-classification)
+#            Veuillez examiner les résultats générés par la branche `dev`.
