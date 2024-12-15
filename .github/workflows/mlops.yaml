@@ -46,9 +46,11 @@ jobs:
       - name: Build and push Docker image
         run: |
           echo "Building Docker image and pushing to GCR..."
+          # Encoder la clé de service en base64
+          SERVICE_ACCOUNT_KEY_BASE64=$(cat service-account-key.json | base64 -w 0)
           gcloud builds submit . \
             --config=cloudbuild.yaml \
-            --substitutions=_GIT_KEY=$GIT_KEY,_WANDB_KEY=$WANDB_KEY,_SERVICE_ACCOUNT_KEY=$GOOGLE_SERVICE_ACCOUNT_KEY
+            --substitutions=_GIT_KEY=$GIT_KEY,_WANDB_KEY=$WANDB_KEY,_SERVICE_ACCOUNT_KEY=$SERVICE_ACCOUNT_KEY_BASE64
 
       # Lancer le job Vertex AI
       - name: Launch Vertex AI job
