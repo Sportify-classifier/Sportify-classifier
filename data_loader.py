@@ -49,4 +49,3 @@ if __name__ == "__main__":
     # Log le tableau récapitulatif des classes exclues
     excluded_classes = params["prepare"].get("excluded_classes", [])
     log_excluded_classes_to_wandb(input_data_dir=input_data_dir, excluded_classes=excluded_classes)
-    
