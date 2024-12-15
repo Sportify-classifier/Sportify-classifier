@@ -8,11 +8,16 @@ on:
 jobs:
   train:
     runs-on: ubuntu-latest
+    env:
+      GIT_KEY: ${{ secrets.GIT_KEY }}
+      WANDB_KEY: ${{ secrets.WANDB_KEY }}
+      GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Activer le compte de service avec le fichier service-account-key.json
+      # Activer le compte de service avec le fichier service-account-key.json (assurez-vous que ce fichier existe dans le dépôt)
       - name: Activate Service Account
         run: |
           gcloud auth activate-service-account --key-file="service-account-key.json"
@@ -24,18 +29,26 @@ jobs:
       - name: Configure gcloud
         run: gcloud config set project modern-bond-303506
 
-      # Vérifier les permissions sur le bucket
+      # Vérifier les permissions sur le bucket GCS
       - name: Check GCS Bucket Access
         run: |
           echo "Testing GCS access..."
           gsutil ls gs://sportify_classifier || echo "Bucket access failed, ensure credentials and permissions are correct"
 
-      # Construire l'image Docker et la pousser sur GCR
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      # Vérifier le contenu du fichier de clé de service
+      - name: Check service account key JSON
+        run: cat service-account-key.json | jq .
+
+      # Construire et pousser l'image Docker via Cloud Build en passant les substitutions
       - name: Build and push Docker image
         run: |
           echo "Building Docker image and pushing to GCR..."
-          gcloud builds submit --tag gcr.io/modern-bond-303506/train_image:latest
-
+          gcloud builds submit . \
+            --config=cloudbuild.yaml \
+            --substitutions=_GIT_KEY=$GIT_KEY,_WANDB_KEY=$WANDB_KEY,_SERVICE_ACCOUNT_KEY=$GOOGLE_SERVICE_ACCOUNT_KEY
 
       # Lancer le job Vertex AI
       - name: Launch Vertex AI job
