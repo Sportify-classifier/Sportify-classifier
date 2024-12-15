@@ -45,10 +45,6 @@ RUN gcloud auth activate-service-account --key-file="$GOOGLE_APPLICATION_CREDENT
 # Vérifier l'accès au bucket GCS
 RUN gsutil ls gs://sportify_classifier || echo "GCS access failed, ensure credentials and permissions are correct"
 
-# Configurer le remote DVC.
-# Adaptez le nom du remote et l'URL selon vos besoins. Ici on suppose "dataset_remote" et le bucket déjà utilisé.
-RUN dvc remote add -d dataset_remote gs://sportify_classifier/datasets
-
 # Vérifier le remote
 RUN dvc remote list
 

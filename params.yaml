@@ -10,7 +10,7 @@ prepare:
 train:
   seed: 42
   lr: 0.005
-  epochs: 2
+  epochs: 3
   batch_size: 16
   num_classes: 10
   num_folds: 3 #minimum 2
