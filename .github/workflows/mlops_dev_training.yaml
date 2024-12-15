@@ -28,7 +28,7 @@ jobs:
       # Check the connect to gcloud, but unfortunately, we didn't find the solution to put a secret.
       - name: Activate Service Account
         run: |
-          gcloud auth login --cred-file="service-account-key.json"
+          gcloud auth activate-service-account --key-file="service-account-key.json"
 
       # For debugging
       - name: List files in context
