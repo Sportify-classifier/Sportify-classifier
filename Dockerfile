@@ -13,8 +13,6 @@ RUN apt-get update && apt-get install -y \
     curl \
     gnupg \
     jq \
-    curl \
-    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 # Ajouter la clé GPG de Google Cloud
@@ -51,11 +49,5 @@ RUN gsutil ls gs://sportify_classifier || echo "GCS access failed, ensure creden
 # Vérifier le remote
 RUN dvc remote list
 
-# Télécharger les données
-RUN mkdir -p /app/data \
-    && curl -L -o data.zip "https://storage.googleapis.com/dataset_sportify/all_data.zip" \
-    && file data.zip \
-    && cat data.zip \
-
 # Le CMD lance finalement le repro (les données sont déjà en cache grâce à dvc pull)
-CMD ["bash", "-c", "echo 'Running pipeline...' && pwd && ls -la && ls data && dvc repro && echo 'Pipeline finished.' && bash"]
+CMD ["bash", "-c", "echo 'Running pipeline...' && pwd && ls -la && ls data && dvc repro --pull && echo 'Pipeline finished.' && bash"]
