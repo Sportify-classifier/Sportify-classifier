@@ -17,6 +17,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.12
+      
+      - name: Install Dependencies
+        run: pip install --no-cache-dir -r requirements.txt
+
       # Check the connect to gcloud, but unfortunately, we didn't find the solution to put a secret.
       - name: Activate Service Account
         run: |
@@ -103,7 +111,6 @@ jobs:
       # Build the Docker container using BentoML
       - name: Build BentoML Container
         run: |
-          pip install bentoml
           bentoml build .
           bentoml containerize sports_classifier_service:latest --image-tag sports-classifier:latest
 
