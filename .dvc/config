@@ -1,6 +1,4 @@
 [core]
     remote = dataset_remote
-['remote "model_remote"']
-    url = gs://sportify_classifier/dvc-storage
 ['remote "dataset_remote"']
     url = gs://sportify_classifier/datasets

@@ -63,8 +63,8 @@ stages:
     outs:
     - path: model_versions
       hash: md5
-      md5: c1119d7bdd61e8130a9928c3ceee011b.dir
-      size: 31324106
+      md5: b32f05d3d1ba21bf275aae5918caab8f.dir
+      size: 31324062
       nfiles: 5
   evaluate:
     cmd: python evaluate.py model_versions data/prepared evaluation_outputs gs://sportify_classifier/evaluation_output
@@ -80,8 +80,8 @@ stages:
       size: 11457
     - path: model_versions
       hash: md5
-      md5: c1119d7bdd61e8130a9928c3ceee011b.dir
-      size: 31324106
+      md5: b32f05d3d1ba21bf275aae5918caab8f.dir
+      size: 31324062
       nfiles: 5
     outs:
     - path: evaluation_outputs/confusion_matrix.png
